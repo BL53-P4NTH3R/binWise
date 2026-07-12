@@ -1,0 +1,103 @@
+# ==========================================
+# 1. Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# ==========================================
+# 2. Operating System & IDE Files
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.lsdheaders
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# VS Code & JetBrains
+.idea/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*.swo
+
+# Docker volume data mounts
+postgres_data/
+redis_data/
+
+# ==========================================
+# 3. Backend (Python / FastAPI / Celery)
+# ==========================================
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+venv/
+*venv/
+.venv/
+env/
+ENV/
+
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+
+# Celery task queue logs
+celerybeat-schedule
+celerybeat.pid
+*.log
+
+# ==========================================
+# 4. Frontend (React / Vite / TypeScript)
+# ==========================================
+# Dependency folders (installed via npm/yarn/pnpm)
+frontend/node_modules/
+
+# Production build outputs
+frontend/dist/
+frontend/build/
+
+# Package manager log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite & TypeScript build caches
+frontend/.vite/
+*.tsbuildinfo
+
+# ==========================================
+# 5. Hardware Firmware (PlatformIO / ESP32)
+# ==========================================
+# PlatformIO build artifacts & auto-downloaded libraries
+hardware/.pio/
+hardware/.pioenvs/
+hardware/.piolibdeps/
+
+# Firmware binary outputs
+*.hex
+*.bin
+*.elf
+
+# C++ Intellisense cache files
+.vscode/.browse.c_cpp.db*
+.vscode/c_cpp_properties.json
