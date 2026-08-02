@@ -1,134 +1,200 @@
 """Driver-only routes for BinWise."""
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
-from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from app.core.database import get_db
+from app.core.security import get_current_user
 from app.models.collection_route import CollectionRoute, RouteStatus
-from app.models.route_waypoint import RouteWaypoint, WayPointStatus
+from app.models.route_waypoint import RouteWaypoint, WaypointStatus
 from app.models.user import User, UserRole
 
 
-router = APIRouter(prefix="/driver", tags=["driver"])
+router = APIRouter(tags=["driver"])
 
 
-def get_current_driver(
-	user_id: UUID | None = Header(default=None, alias="X-User-Id"),
-	db: Session = Depends(get_db),
-) -> User:
-	"""Resolve the current driver from the `X-User-Id` header."""
-	if user_id is None:
-		raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing driver identity")
-	driver = db.exec(select(User).where(User.id == user_id, User.role == UserRole.driver)).first()
-	if driver is None:
-		raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Driver access required")
-	return driver
+# ── DEPENDENCY ────────────────────────────────────────────────────────────────
+
+def require_driver(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency that enforces the requesting user has role=driver.
+    Uses the standard JWT bearer token — same as every other protected endpoint.
+    Raises 403 if the authenticated user is not a driver.
+    """
+    if current_user.role != UserRole.driver:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Driver access required",
+        )
+    return current_user
 
 
-def _serialize_waypoints(route_id: UUID, db: Session) -> list[dict[str, object]]:
-	waypoints = sorted(
-		db.exec(select(RouteWaypoint).where(RouteWaypoint.route_id == route_id)).all(),
-		key=lambda waypoint: waypoint.stop_order,
-	)
-	return [
-		{
-			"id": waypoint.id,
-			"bin_id": waypoint.bin_id,
-			"stop_order": waypoint.stop_order,
-			"status": waypoint.status.value,
-			"collected_at": waypoint.collected_at,
-			"skip_reason": waypoint.skip_reason,
-		}
-		for waypoint in waypoints
-	]
+# ── HELPERS ───────────────────────────────────────────────────────────────────
 
+def _serialize_waypoints(route_id: UUID, db: Session) -> list[dict]:
+    """Return waypoints for a route sorted by stop_order."""
+    waypoints = sorted(
+        db.exec(select(RouteWaypoint).where(RouteWaypoint.route_id == route_id)).all(),
+        key=lambda w: w.stop_order,
+    )
+    return [
+        {
+            "id":                     str(w.id),
+            "bin_id":                 str(w.bin_id) if w.bin_id else None,
+            "stop_order":             w.stop_order,
+            "fill_pct_at_generation": w.fill_pct_at_generation,
+            "status":                 w.status,
+            "collected_at":           w.collected_at,
+            "skip_reason":            w.skip_reason,
+        }
+        for w in waypoints
+    ]
+
+
+def _route_payload(route: CollectionRoute, db: Session) -> dict:
+    """Build a consistent route response for driver endpoints."""
+    return {
+        "id":                    str(route.id),
+        "route_code":            route.route_code,
+        "status":                route.status,
+        "threshold_pct":         route.threshold_pct,
+        "bin_count":             route.bin_count,
+        "ai_distance_km":        route.ai_distance_km,
+        "baseline_distance_km":  route.baseline_distance_km,
+        "ai_duration_min":       route.ai_duration_min,
+        "generated_at":          route.generated_at,
+        "started_at":            route.started_at,
+        "completed_at":          route.completed_at,
+        "waypoints":             _serialize_waypoints(route.id, db),
+    }
+
+
+# ── ENDPOINTS ─────────────────────────────────────────────────────────────────
 
 @router.get("/route")
 def get_current_route(
-	driver: User = Depends(get_current_driver),
-	db: Session = Depends(get_db),
-) -> dict[str, object]:
-	"""Return the current in-progress route assigned to the authenticated driver."""
-	route = db.exec(
-		select(CollectionRoute).where(
-			CollectionRoute.assigned_driver_id == driver.id,
-			CollectionRoute.status == RouteStatus.in_progress,
-		)
-	).first()
-	if route is None:
-		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active route found")
-	return {
-		"id": route.id,
-		"route_code": route.route_code,
-		"status": route.status.value,
-		"generated_at": route.generated_at,
-		"started_at": route.started_at,
-		"completed_at": route.completed_at,
-		"waypoints": _serialize_waypoints(route.id, db),
-	}
+    driver: User = Depends(require_driver),
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Return the driver's currently assigned in_progress route.
+    Returns 404 if no active route is assigned — the driver home screen
+    shows a 'no route assigned' state when this happens.
+    """
+    route = db.exec(
+        select(CollectionRoute).where(
+            CollectionRoute.assigned_driver_id == driver.id,
+            CollectionRoute.status == RouteStatus.in_progress,
+        )
+    ).first()
+
+    if route is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active route assigned to you",
+        )
+
+    return _route_payload(route, db)
+
+
+class CollectRequest(BaseModel := __import__('pydantic').BaseModel):
+    """Request body for marking a bin as collected."""
+    bin_id: UUID
 
 
 @router.post("/collect")
-def collect_waypoint(
-	bin_id: UUID,
-	driver: User = Depends(get_current_driver),
-	db: Session = Depends(get_db),
-) -> dict[str, object]:
-	"""Mark the waypoint for a bin as collected for the driver's active route."""
-	route = db.exec(
-		select(CollectionRoute).where(
-			CollectionRoute.assigned_driver_id == driver.id,
-			CollectionRoute.status == RouteStatus.in_progress,
-		)
-	).first()
-	if route is None:
-		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active route found")
+def collect_bin(
+    payload: CollectRequest,
+    driver: User = Depends(require_driver),
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Mark a bin waypoint as collected on the driver's active route.
+    Finds the driver's current in_progress route automatically —
+    the driver app does not need to pass a route_id.
+    Returns 400 if the driver has no active route.
+    Returns 404 if the bin is not a waypoint on the active route.
+    """
+    route = db.exec(
+        select(CollectionRoute).where(
+            CollectionRoute.assigned_driver_id == driver.id,
+            CollectionRoute.status == RouteStatus.in_progress,
+        )
+    ).first()
 
-	waypoint = db.exec(
-		select(RouteWaypoint).where(RouteWaypoint.route_id == route.id, RouteWaypoint.bin_id == bin_id)
-	).first()
-	if waypoint is None:
-		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Waypoint not found")
+    if route is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have no active route to collect from",
+        )
 
-	if waypoint.status != WayPointStatus.collected:
-		waypoint.status = WayPointStatus.collected
-		waypoint.collected_at = datetime.now(timezone.utc)
-		db.add(waypoint)
-		db.commit()
+    waypoint = db.exec(
+        select(RouteWaypoint).where(
+            RouteWaypoint.route_id == route.id,
+            RouteWaypoint.bin_id   == payload.bin_id,
+        )
+    ).first()
 
-	return {"message": "Waypoint collected", "route_id": route.id, "bin_id": bin_id}
+    if waypoint is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This bin is not a waypoint on your active route",
+        )
+
+    # Idempotent — safe to call twice without duplicating the timestamp
+    if waypoint.status != WaypointStatus.collected:
+        waypoint.status       = WaypointStatus.collected
+        waypoint.collected_at = datetime.now(timezone.utc)
+        db.add(waypoint)
+        db.commit()
+
+    # Check if all waypoints are now resolved — complete the route if so
+    unresolved = db.exec(
+        select(RouteWaypoint).where(
+            RouteWaypoint.route_id == route.id,
+            RouteWaypoint.status   == WaypointStatus.pending,
+        )
+    ).first()
+
+    if unresolved is None:
+        route.status       = RouteStatus.completed
+        route.completed_at = datetime.now(timezone.utc)
+        db.add(route)
+        db.commit()
+
+    return {
+        "message":    "Bin marked as collected",
+        "route_id":   str(route.id),
+        "bin_id":     str(payload.bin_id),
+        "route_status": route.status,
+    }
 
 
 @router.get("/history")
 def get_history(
-	driver: User = Depends(get_current_driver),
-	db: Session = Depends(get_db),
-) -> list[dict[str, object]]:
-	"""Return completed routes for the authenticated driver, grouped by date."""
-	routes = db.exec(
-		select(CollectionRoute).where(
-			CollectionRoute.assigned_driver_id == driver.id,
-			CollectionRoute.status == RouteStatus.completed,
-		)
-	).all()
-	history: dict[str, dict[str, Any]] = {}
-	for route in sorted(routes, key=lambda route: route.completed_at or route.generated_at, reverse=True):
-		key = route.completed_at.date().isoformat() if route.completed_at else route.generated_at.date().isoformat()
-		entry = history.setdefault(key, {"date": key, "routes": [], "bin_count": 0})
-		routes_for_day = cast(list[dict[str, object]], entry["routes"])
-		routes_for_day.append(
-			{
-				"id": route.id,
-				"route_code": route.route_code,
-				"completed_at": route.completed_at,
-				"bin_count": route.bin_count,
-			}
-		)
-		entry["bin_count"] = cast(int, entry["bin_count"]) + route.bin_count
-	return list(history.values())
+    driver: User = Depends(require_driver),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Return all completed routes assigned to this driver, most recent first.
+    Each route includes its waypoint list for the history expand/collapse UI.
+    The frontend groups by date client-side from the completed_at field.
+    """
+    routes = db.exec(
+        select(CollectionRoute).where(
+            CollectionRoute.assigned_driver_id == driver.id,
+            CollectionRoute.status             == RouteStatus.completed,
+        )
+    ).all()
+
+    return [
+        _route_payload(route, db)
+        for route in sorted(
+            routes,
+            key=lambda r: r.completed_at or r.generated_at,
+            reverse=True,
+        )
+    ]

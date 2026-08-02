@@ -1,8 +1,6 @@
 """Alert service helpers for BinWise."""
 
-from __future__ import annotations
-
-from typing import cast
+from typing import cast, Optional
 
 from sqlmodel import Session, select
 
@@ -14,9 +12,9 @@ from app.models.bin import Bin
 from app.services.notification_service import send_alert_email
 
 
-def create_alert(bin_record: Bin, alert_type: AlertType, severity: AlertSeverity, db: Session) -> Alert:
+def create_alert(bin_record: Bin, alert_type: AlertType, severity: AlertSeverity, db: Session, message: Optional[str] = None,) -> Alert:
 	"""Create a new alert, persist it, and send the notification email."""
-	alert = Alert(bin_id=cast(UUID, bin_record.id), alert_type=alert_type, severity=severity)
+	alert = Alert(bin_id=cast(UUID, bin_record.id), alert_type=alert_type, severity=severity, message=message)
 	db.add(alert)
 	db.commit()
 	db.refresh(alert)

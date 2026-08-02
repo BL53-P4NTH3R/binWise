@@ -1,65 +1,91 @@
 """Route optimization helpers for BinWise."""
 
-from __future__ import annotations
-
 from math import asin, cos, radians, sin, sqrt
-
 from app.models.bin import Bin
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-	"""Return the great-circle distance in kilometers between two coordinates."""
-	phi1 = radians(lat1)
-	phi2 = radians(lat2)
-	delta_phi = radians(lat2 - lat1)
-	delta_lambda = radians(lon2 - lon1)
-	a = sin(delta_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(delta_lambda / 2) ** 2
-	return 2 * 6371.0 * asin(sqrt(a))
+    """Return the great-circle distance in kilometres between two coordinates."""
+    phi1, phi2       = radians(lat1), radians(lat2)
+    delta_phi        = radians(lat2 - lat1)
+    delta_lambda     = radians(lon2 - lon1)
+    a = sin(delta_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(delta_lambda / 2) ** 2
+    return 2 * 6371.0 * asin(sqrt(a))
 
 
-def optimize_route(bins: list[Bin]) -> list[dict[str, object]]:
-	"""Build a nearest-neighbor collection order starting from the fullest bin."""
-	if not bins:
-		return []
+def nearest_neighbour(bins: list[Bin]) -> list[dict]:
+    """
+    Nearest-neighbour TSP heuristic.
+    Starts from the fullest bin, then greedily picks the closest unvisited bin.
+    Returns an ordered list of waypoint dicts: [{bin_id, stop_order}, ...]
+    """
+    if not bins:
+        return []
 
-	remaining = bins[:]
-	current = max(remaining, key=lambda bin_item: bin_item.fill_pct)
-	remaining.remove(current)
-	ordered = [current]
+    remaining = bins[:]
+    current   = max(remaining, key=lambda b: b.fill_pct)
+    remaining.remove(current)
+    ordered   = [current]
 
-	while remaining:
-		next_bin = min(
-			remaining,
-			key=lambda bin_item: haversine_km(
-				current.latitude,
-				current.longitude,
-				bin_item.latitude,
-				bin_item.longitude,
-			),
-		)
-		remaining.remove(next_bin)
-		ordered.append(next_bin)
-		current = next_bin
+    while remaining:
+        nearest = min(
+            remaining,
+            key=lambda b: haversine_km(
+                current.latitude, current.longitude,
+                b.latitude,       b.longitude,
+            ),
+        )
+        remaining.remove(nearest)
+        ordered.append(nearest)
+        current = nearest
 
-	return [{"bin_id": bin_item.id, "stop_order": index + 1} for index, bin_item in enumerate(ordered)]
+    return [
+        {"bin_id": b.id, "stop_order": i + 1}
+        for i, b in enumerate(ordered)
+    ]
 
 
-def calculate_total_distance(bins: list[Bin]) -> float:
-	"""Sum the distance between consecutive bins in an ordered route."""
-	if len(bins) < 2:
-		return 0.0
-	return sum(
-		haversine_km(
-			bins[index].latitude,
-			bins[index].longitude,
-			bins[index + 1].latitude,
-			bins[index + 1].longitude,
-		)
-		for index in range(len(bins) - 1)
-	)
+def calculate_total_distance(
+    waypoints: list[dict],
+    bins: list[Bin],
+) -> float:
+    """
+    Sum haversine distances along an ordered waypoint list.
+
+    Args:
+        waypoints: List of dicts with bin_id and stop_order keys,
+                   as returned by nearest_neighbour() or simulate_baseline().
+        bins:      Full list of Bin objects to look up coordinates from.
+
+    Returns:
+        Total route distance in kilometres.
+    """
+    if len(waypoints) < 2:
+        return 0.0
+
+    # Build a lookup map for O(1) coordinate access
+    bin_map = {b.id: b for b in bins}
+
+    ordered = sorted(waypoints, key=lambda w: w["stop_order"])
+
+    total = 0.0
+    for i in range(len(ordered) - 1):
+        a = bin_map.get(ordered[i]["bin_id"])
+        b = bin_map.get(ordered[i + 1]["bin_id"])
+        if a and b:
+            total += haversine_km(a.latitude, a.longitude, b.latitude, b.longitude)
+    return total
 
 
 def simulate_baseline(bins: list[Bin]) -> float:
-	"""Compute a baseline route distance by visiting bins in bin-code order."""
-	ordered = sorted(bins, key=lambda bin_item: bin_item.bin_code)
-	return calculate_total_distance(ordered)
+    """
+    Baseline route distance: visit bins in alphabetical bin_code order.
+    Simulates the rigid fixed-schedule approach your system replaces.
+    Used to populate baseline_distance_km in CollectionRoute records.
+    """
+    ordered = sorted(bins, key=lambda b: b.bin_code)
+    baseline_waypoints = [
+        {"bin_id": b.id, "stop_order": i + 1}
+        for i, b in enumerate(ordered)
+    ]
+    return calculate_total_distance(baseline_waypoints, bins)

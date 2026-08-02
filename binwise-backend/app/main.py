@@ -1,13 +1,21 @@
 """FastAPI application wiring for BinWise."""
 
-from __future__ import annotations
-
+import sys
 from contextlib import asynccontextmanager
 from importlib import import_module
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
+from app.models import *
+
+# Allow `uvicorn main:app --reload` to resolve `app.*` imports when this file is
+# executed from inside the `app/` directory.
+BASE_DIR = Path(__file__).resolve().parent
+PARENT_DIR = BASE_DIR.parent
+if str(PARENT_DIR) not in sys.path:
+	sys.path.insert(0, str(PARENT_DIR))
 
 import app.models  # noqa: F401 - registers SQLModel tables
 from app.core.config import settings
@@ -30,6 +38,8 @@ fastapi_app = FastAPI(
 	version="1.0.0",
 	lifespan=lifespan,
 )
+
+app = fastapi_app
 
 fastapi_app.add_middleware(
 	CORSMiddleware,

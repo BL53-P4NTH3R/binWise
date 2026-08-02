@@ -11,11 +11,10 @@ Demonstrates every SQLModel pattern you will repeat across all other model files
   - __table_args__ for composite indexes
   - Optional fields with explicit None defaults
 """
-from __future__ import annotations
-
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, TYPE_CHECKING
+from uuid import UUID, uuid4
 
 from sqlalchemy import Column, Index
 from sqlalchemy import Enum as saEnum
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from app.models.sensor_node import SensorNode
     from app.models.sensor_reading import SensorReading
     from app.models.zone import Zone
+    from app.models.route_waypoint import RouteWaypoint
 
 
 # Enum for bin status
@@ -77,24 +77,7 @@ def derive_fill_status(fill_pct: float) -> FillStatus:
     
 
 # BASE CLASS
-
 class BinBase(SQLModel):
-    """
-    Shared fields definition for the Bin resource.
-    This class has no table=True - it is purely a base class for other models to inherit from..
-    All variant classes (BinCreate, BinRead, Bin table) inherit from this base class.
-
-    Fields:
-        bin_code        : Human-readable code for the bin, e.g., "BIN-001"
-        location_name   : Descriptive physical location for display in the 
-                            dashboard, e.g., "Main Street & 1st Ave"
-        latitude        : Latitude coordinate for the bin's location
-        longitude       : Longitude coordinate for the bin's location
-        capacity_l      : Physical capacity of the bin in litres. Default 120L
-                          covers the standard 120L bin size.
-        height_cm        : Physical height of the bin in centimeters. Default 100cm
-                          covers the standard 100cm bin size.
-    """
     bin_code: str = Field(max_length=20, description="e.g., FPS-Bin-01")
     location_name: str = Field(max_length=120)
     latitude: float = Field(description="Latitude coordinate for the bin's location")
@@ -105,24 +88,16 @@ class BinBase(SQLModel):
 
 # TABLE CLASS
 class Bin(BinBase, table=True):
-    """
-    The Bin table model, inheriting from BinBase.
-    This class represents the actual database table for bins.
+    id: UUID = Field(
+        default_factory=uuid4,
+        primary_key=True,
+        index=True,
+        nullable=False,
+        description="Unique identifier for the bin"
+    )
 
-    Additional Fields:
-        id              : Primary key for the bin record
-        zone_id         : Foreign key to the Zone table
-        fill_pct        : Current fill percentage of the bin
-        battery_pct     : Current battery percentage of the bin's sensor
-        fill_status     : Derived fill status based on fill_pct
-        last_reading     : Timestamp of the last sensor reading for this bin
-        status          : Lifecycle status of the bin (active, inactive, offline)
-        installed_at     : Timestamp when the bin was installed
-        created_at      : Timestamp when the bin record was created
-        updated_at      : Timestamp when the bin record was last updated
-    """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    zone_id: Optional[int] = Field(default=None, foreign_key="zone.id", index=True)
+    zone_id: Optional[UUID] = Field(default=None, foreign_key="zone.id")
+    
     fill_pct: float = Field(default=0.0, description="Current fill percentage of the bin")
     battery_pct: float = Field(default=100.0, description="Current battery percentage of the bin's sensor")
     last_reading: Optional[datetime] = Field(default=None, description="Timestamp of the last sensor reading for this bin")
@@ -134,9 +109,16 @@ class Bin(BinBase, table=True):
 
     # Relationships
     zone: Optional["Zone"] = Relationship(back_populates="bins")
-    sensors: List["SensorNode"] = Relationship(back_populates="bin")
+    sensor_node: Optional["SensorNode"] = Relationship(
+        back_populates="bin",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
     readings: List["SensorReading"] = Relationship(back_populates="bin")
     alerts: List["Alert"] = Relationship(back_populates="bin")
+    waypoints: List["RouteWaypoint"] = Relationship(
+        back_populates="bin",
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
     __table_args__ = (
         Index("ix_bin_zone_id", "zone_id"),
@@ -147,21 +129,12 @@ class Bin(BinBase, table=True):
 
 
 # API Variants Schemas
-
 class BinCreate(BinBase):
-    """
-    Schema for creating a new Bin instance.
-    Inherits all attributes from BinBase.
-    """
-    zone_id: int = Field(..., description="ID of the zone this bin belongs to")
+    zone_id: UUID = Field(..., description="ID of the zone this bin belongs to")
 
 class BinRead(BinBase):
-    """
-    Schema for reading a Bin instance.
-    Inherits all attributes from BinBase and adds additional fields.
-    """
-    id: int
-    zone_id: int
+    id: UUID
+    zone_id: Optional[UUID] = None
     zone_name: Optional[str] = None
     fill_pct: float
     fill_status: FillStatus
@@ -172,18 +145,10 @@ class BinRead(BinBase):
     created_at: datetime
     updated_at: datetime
 
-    model_config = {
-        "from_attributes": True,
-        "json_encoders": {
-            datetime: lambda v: v.isoformat() if v else None,
-        },
-    }
+    model_config = {"from_attributes": True}
 
 class BinLive(SQLModel):
-    """
-    Lightweight response schema for live bin data, used in real-time dashboards and monitoring.
-    """
-    id : int
+    id : UUID
     bin_code : str
     location_name : str
     latitude : float
@@ -193,38 +158,20 @@ class BinLive(SQLModel):
     last_reading : Optional[datetime]
     status : BinStatus
 
-    model_config = {
-        "from_attributes": True,
-        "json_encoders": {
-            datetime: lambda v: v.isoformat() if v else None,
-        },
-    }
+    model_config = {"from_attributes": True}
 
 class BinUpdate(SQLModel):
-    """
-    Schema for updating an existing Bin instance.
-    All fields are optional to allow partial updates.
-    """
-    bin_code: Optional[str] = Field(None, max_length=20, description="Human-readable code for the bin")
-    location_name: Optional[str] = Field(None, max_length=120, description="Descriptive physical location for display in the dashboard")
-    latitude: Optional[float] = Field(None, description="Latitude coordinate for the bin's location")
-    longitude: Optional[float] = Field(None, description="Longitude coordinate for the bin's location")
-    capacity_l: Optional[int] = Field(None, description="Physical capacity of the bin in litres")
-    height_cm: Optional[int] = Field(None, description="Physical height of the bin in centimeters")
-    zone_id: Optional[int] = Field(None, description="ID of the zone this bin belongs to")
-    fill_pct: Optional[float] = Field(None, description="Current fill percentage of the bin")
-    battery_pct: Optional[float] = Field(None, description="Current battery percentage of the bin's sensor")
-    last_reading: Optional[datetime] = Field(None, description="Timestamp of the last sensor reading for this bin")
-    fill_status: Optional[FillStatus] = Field(None, description="Derived fill status based on fill_pct")
-    status: Optional[BinStatus] = Field(None, description="Lifecycle status of the bin (active, inactive, offline)")
-    installed_at: Optional[datetime] = Field(None, description="Timestamp when the bin was installed")
+    bin_code      : Optional[str]      = Field(None, max_length=20)
+    location_name : Optional[str]      = Field(None, max_length=120)
+    latitude      : Optional[float]    = None
+    longitude     : Optional[float]    = None
+    capacity_l    : Optional[int]      = None
+    height_cm     : Optional[int]      = None
+    zone_id       : Optional[UUID]     = None
+    installed_at  : Optional[datetime] = None
 
 class BinSummary(SQLModel):
-    """
-    Summary schema for a Bin instance, used for quick overviews.
-    """
     total_bins: int
     overflow_count: int
     offline_count: int
     collections_today: int
-    

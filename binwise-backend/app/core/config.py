@@ -24,15 +24,24 @@ class Settings(BaseSettings):
     )
 
     # Database configuration
-    DATABASE_URL: str = Field(..., description="The URL for the database connection.")
-    SECRET_KEY: str = Field(..., description="The secret key used for cryptographic operations.")
+    DATABASE_URL: str = Field(
+        "postgresql://postgres:postgres@localhost:5432/binwise",
+        description="The URL for the database connection.",
+    )
+    SECRET_KEY: str = Field(
+        "change-me-in-production",
+        description="The secret key used for cryptographic operations.",
+    )
     ALGORITHM: str = Field("HS256", description="The algorithm used for hashing and encryption.")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, description="The expiration time for access tokens in minutes.")
 
     # Cache configuration
     REDIS_HOST: str = Field("localhost", description="The hostname of the Redis server.")
     REDIS_PORT: int = Field(6379, description="The port number of the Redis server.")
-    REDIS_URL: str = Field(..., description="The URL for the Redis connection.")
+    REDIS_URL: str = Field(
+        "redis://localhost:6379/0",
+        description="The URL for the Redis connection.",
+    )
 
     # AI Route Engine configuration
     DEFAULT_OVERFLOW_THRESHOLD_PCT: float = Field(80.0, description="The default overflow threshold percentage for bins.")

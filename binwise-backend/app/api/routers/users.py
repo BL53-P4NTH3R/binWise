@@ -1,7 +1,5 @@
 """Admin-only user management routes for BinWise."""
 
-from __future__ import annotations
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,7 +10,7 @@ from app.core.security import get_password_hash, require_admin
 from app.models.user import User, UserCreate, UserRead, UserRole, UserUpdate
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 
 
 @router.get("/", response_model=list[UserRead])
@@ -33,7 +31,7 @@ def create_user(
 	"""Create a new user after validating email uniqueness and hashing the password."""
 	existing_user = db.exec(select(User).where(User.email == payload.email)).first()
 	if existing_user is not None:
-		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
+		raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
 
 	user = User(
 		email=payload.email,

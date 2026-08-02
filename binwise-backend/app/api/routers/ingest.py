@@ -1,7 +1,5 @@
 """Sensor ingestion endpoint for BinWise."""
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from typing import cast
 from uuid import UUID
@@ -16,7 +14,7 @@ from app.models.sensor_reading import SensorPayload, SensorReading
 from app.services.alert_service import check_alerts
 
 
-router = APIRouter(prefix="/ingest", tags=["ingest"])
+router = APIRouter(tags=["ingest"])
 
 
 @router.post("")

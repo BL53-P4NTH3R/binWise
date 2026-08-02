@@ -1,7 +1,5 @@
 """Notification helpers for BinWise alerts."""
 
-from __future__ import annotations
-
 import os
 import smtplib
 from email.message import EmailMessage

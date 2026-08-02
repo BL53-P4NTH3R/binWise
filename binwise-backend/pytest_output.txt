@@ -1,0 +1,239 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\.binwise-venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\binwise-backend
+configfile: pytest.ini
+plugins: anyio-4.14.1
+collecting ... collected 120 items
+
+tests/test_alerts.py::TestAlertService::test_check_alerts_creates_overflow_alert PASSED [  0%]
+tests/test_alerts.py::TestAlertService::test_check_alerts_deduplication PASSED [  1%]
+tests/test_alerts.py::TestAlertService::test_check_alerts_no_alert_below_threshold PASSED [  2%]
+tests/test_alerts.py::TestAlertService::test_create_alert_persists_to_db PASSED [  3%]
+tests/test_alerts.py::TestGetAlerts::test_returns_open_alerts_by_default PASSED [  4%]
+tests/test_alerts.py::TestGetAlerts::test_filter_by_resolved_status PASSED [  5%]
+tests/test_alerts.py::TestGetAlerts::test_returns_401_without_token PASSED [  5%]
+tests/test_alerts.py::TestGetAlerts::test_driver_cannot_access_alerts PASSED [  6%]
+tests/test_alerts.py::TestResolveAlert::test_admin_can_resolve_alert PASSED [  7%]
+tests/test_alerts.py::TestResolveAlert::test_resolve_already_resolved_returns_400 PASSED [  8%]
+tests/test_alerts.py::TestResolveAlert::test_unknown_alert_id_returns_404 PASSED [  9%]
+tests/test_alerts.py::TestResolveAlert::test_driver_cannot_resolve_alert PASSED [ 10%]
+tests/test_alerts.py::TestAlertThresholds::test_get_thresholds_returns_settings PASSED [ 10%]
+tests/test_alerts.py::TestAlertThresholds::test_admin_can_update_threshold PASSED [ 11%]
+tests/test_alerts.py::TestAlertThresholds::test_threshold_above_100_returns_422 PASSED [ 12%]
+tests/test_analytics.py::TestFillTrends::test_returns_200_for_admin PASSED [ 13%]
+tests/test_analytics.py::TestFillTrends::test_returns_list_of_daily_averages PASSED [ 14%]
+tests/test_analytics.py::TestFillTrends::test_driver_cannot_access_analytics PASSED [ 15%]
+tests/test_analytics.py::TestFillTrends::test_returns_401_without_token PASSED [ 15%]
+tests/test_analytics.py::TestFillTrends::test_zone_filter_accepted PASSED [ 16%]
+tests/test_analytics.py::TestTripsComparison::test_returns_route_comparison_data PASSED [ 17%]
+tests/test_analytics.py::TestTripsComparison::test_ai_always_lte_baseline_in_completed_routes PASSED [ 18%]
+tests/test_analytics.py::TestExportReport::test_export_returns_csv_content_type PASSED [ 19%]
+tests/test_analytics.py::TestExportReport::test_export_has_attachment_header PASSED [ 20%]
+tests/test_analytics.py::TestExportReport::test_driver_cannot_export PASSED [ 20%]
+tests/test_auth.py::TestLogin::test_admin_login_returns_token FAILED     [ 21%]
+tests/test_auth.py::TestLogin::test_driver_login_returns_token FAILED    [ 22%]
+tests/test_auth.py::TestLogin::test_wrong_password_returns_401 PASSED    [ 23%]
+tests/test_auth.py::TestLogin::test_unknown_email_returns_401 PASSED     [ 24%]
+tests/test_auth.py::TestLogin::test_missing_email_field_returns_422 PASSED [ 25%]
+tests/test_auth.py::TestLogin::test_missing_password_field_returns_422 PASSED [ 25%]
+tests/test_auth.py::TestLogin::test_inactive_user_cannot_login PASSED    [ 26%]
+tests/test_auth.py::TestLogin::test_empty_body_returns_422 PASSED        [ 27%]
+tests/test_auth.py::TestForgotPassword::test_known_email_returns_200 PASSED [ 28%]
+tests/test_auth.py::TestForgotPassword::test_unknown_email_still_returns_200 PASSED [ 29%]
+tests/test_bins.py::TestGetLiveBins::test_returns_200_for_authenticated_user PASSED [ 30%]
+tests/test_bins.py::TestGetLiveBins::test_returns_list_of_bins PASSED    [ 30%]
+tests/test_bins.py::TestGetLiveBins::test_live_response_contains_required_fields PASSED [ 31%]
+tests/test_bins.py::TestGetLiveBins::test_returns_401_without_token PASSED [ 32%]
+tests/test_bins.py::TestGetLiveBins::test_driver_can_access_live_bins PASSED [ 33%]
+tests/test_bins.py::TestGetBinsSummary::test_returns_summary_kpi_fields PASSED [ 34%]
+tests/test_bins.py::TestGetBinsSummary::test_overflow_count_correct PASSED [ 35%]
+tests/test_bins.py::TestGetBinsSummary::test_returns_401_without_token PASSED [ 35%]
+tests/test_bins.py::TestGetBins::test_returns_paginated_list PASSED      [ 36%]
+tests/test_bins.py::TestGetBins::test_returns_401_without_token FAILED   [ 37%]
+tests/test_bins.py::TestGetBinById::test_returns_bin_detail FAILED       [ 38%]
+tests/test_bins.py::TestGetBinById::test_unknown_id_returns_404 FAILED   [ 39%]
+tests/test_bins.py::TestCreateBin::test_admin_can_create_bin PASSED      [ 40%]
+tests/test_bins.py::TestCreateBin::test_driver_cannot_create_bin PASSED  [ 40%]
+tests/test_bins.py::TestCreateBin::test_duplicate_bin_code_returns_409 FAILED [ 41%]
+tests/test_bins.py::TestCreateBin::test_missing_required_field_returns_422 PASSED [ 42%]
+tests/test_bins.py::TestCreateBin::test_create_bin_sets_active_status PASSED [ 43%]
+tests/test_bins.py::TestUpdateBin::test_admin_can_update_location_name FAILED [ 44%]
+tests/test_bins.py::TestUpdateBin::test_driver_cannot_update_bin PASSED  [ 45%]
+tests/test_bins.py::TestUpdateBin::test_update_unknown_bin_returns_404 FAILED [ 45%]
+tests/test_bins.py::TestDeactivateBin::test_admin_can_deactivate_bin FAILED [ 46%]
+tests/test_bins.py::TestDeactivateBin::test_deactivated_bin_row_still_exists PASSED [ 47%]
+tests/test_bins.py::TestDeactivateBin::test_driver_cannot_deactivate_bin PASSED [ 48%]
+tests/test_driver.py::TestDriverHome::test_driver_can_get_assigned_route PASSED [ 49%]
+tests/test_driver.py::TestDriverHome::test_driver_with_no_route_returns_404 PASSED [ 50%]
+tests/test_driver.py::TestDriverHome::test_admin_cannot_access_driver_route PASSED [ 50%]
+tests/test_driver.py::TestDriverHome::test_unauthenticated_cannot_access PASSED [ 51%]
+tests/test_driver.py::TestDriverCollect::test_driver_can_collect_assigned_bin PASSED [ 52%]
+tests/test_driver.py::TestDriverCollect::test_collect_sets_waypoint_collected PASSED [ 53%]
+tests/test_driver.py::TestDriverCollect::test_unassigned_driver_cannot_collect PASSED [ 54%]
+tests/test_driver.py::TestDriverHistory::test_driver_can_get_history PASSED [ 55%]
+tests/test_driver.py::TestDriverHistory::test_history_only_shows_own_routes PASSED [ 55%]
+tests/test_driver.py::TestDriverHistory::test_admin_cannot_access_driver_history PASSED [ 56%]
+tests/test_ingest.py::TestIngestValidPayload::test_valid_payload_returns_200 PASSED [ 57%]
+tests/test_ingest.py::TestIngestValidPayload::test_ingest_creates_sensor_reading_row PASSED [ 58%]
+tests/test_ingest.py::TestIngestValidPayload::test_ingest_updates_bin_fill_pct PASSED [ 59%]
+tests/test_ingest.py::TestIngestValidPayload::test_ingest_updates_battery_pct PASSED [ 60%]
+tests/test_ingest.py::TestIngestValidPayload::test_ingest_updates_last_reading_timestamp PASSED [ 60%]
+tests/test_ingest.py::TestFillStatusDerivation::test_fill_below_50_sets_normal_status PASSED [ 61%]
+tests/test_ingest.py::TestFillStatusDerivation::test_fill_at_50_sets_warning_status PASSED [ 62%]
+tests/test_ingest.py::TestFillStatusDerivation::test_fill_at_80_sets_warning_status PASSED [ 63%]
+tests/test_ingest.py::TestFillStatusDerivation::test_fill_above_80_sets_overflow_status PASSED [ 64%]
+tests/test_ingest.py::TestFillStatusDerivation::test_fill_at_100_sets_overflow_status PASSED [ 65%]
+tests/test_ingest.py::TestAlertCreation::test_overflow_reading_creates_alert PASSED [ 65%]
+tests/test_ingest.py::TestAlertCreation::test_overflow_alert_not_duplicated PASSED [ 66%]
+tests/test_ingest.py::TestAlertCreation::test_normal_reading_does_not_create_alert PASSED [ 67%]
+tests/test_ingest.py::TestIngestValidation::test_unknown_sensor_id_returns_404 PASSED [ 68%]
+tests/test_ingest.py::TestIngestValidation::test_fill_pct_above_100_returns_422 PASSED [ 69%]
+tests/test_ingest.py::TestIngestValidation::test_fill_pct_below_0_returns_422 PASSED [ 70%]
+tests/test_ingest.py::TestIngestValidation::test_missing_sensor_id_returns_422 PASSED [ 70%]
+tests/test_ingest.py::TestIngestValidation::test_missing_fill_pct_returns_422 PASSED [ 71%]
+tests/test_ingest.py::TestIngestValidation::test_no_auth_required PASSED [ 72%]
+tests/test_routes.py::TestRouteOptimiserService::test_nearest_neighbour_returns_all_bins PASSED [ 73%]
+tests/test_routes.py::TestRouteOptimiserService::test_nearest_neighbour_assigns_sequential_order PASSED [ 74%]
+tests/test_routes.py::TestRouteOptimiserService::test_nearest_neighbour_single_bin PASSED [ 75%]
+tests/test_routes.py::TestRouteOptimiserService::test_nearest_neighbour_empty_input_returns_empty PASSED [ 75%]
+tests/test_routes.py::TestRouteOptimiserService::test_ai_distance_less_than_baseline PASSED [ 76%]
+tests/test_routes.py::TestGenerateRoute::test_admin_can_generate_route PASSED [ 77%]
+tests/test_routes.py::TestGenerateRoute::test_generated_route_contains_overflow_bins PASSED [ 78%]
+tests/test_routes.py::TestGenerateRoute::test_generated_route_has_route_code PASSED [ 79%]
+tests/test_routes.py::TestGenerateRoute::test_generated_route_stores_ai_and_baseline_distance PASSED [ 80%]
+tests/test_routes.py::TestGenerateRoute::test_ai_distance_lte_baseline_in_response PASSED [ 80%]
+tests/test_routes.py::TestGenerateRoute::test_no_eligible_bins_returns_400 PASSED [ 81%]
+tests/test_routes.py::TestGenerateRoute::test_driver_cannot_generate_route PASSED [ 82%]
+tests/test_routes.py::TestGenerateRoute::test_unauthenticated_cannot_generate_route PASSED [ 83%]
+tests/test_routes.py::TestGetRoutes::test_returns_routes_list PASSED     [ 84%]
+tests/test_routes.py::TestGetRoutes::test_driver_can_list_routes PASSED  [ 85%]
+tests/test_routes.py::TestGetRouteById::test_returns_route_with_waypoints PASSED [ 85%]
+tests/test_routes.py::TestGetRouteById::test_waypoints_ordered_by_stop_order PASSED [ 86%]
+tests/test_routes.py::TestAssignRoute::test_admin_can_assign_driver PASSED [ 87%]
+tests/test_routes.py::TestAssignRoute::test_assigning_non_driver_user_returns_400 PASSED [ 88%]
+tests/test_routes.py::TestMarkCollected::test_driver_can_mark_waypoint_collected PASSED [ 89%]
+tests/test_routes.py::TestMarkCollected::test_all_collected_sets_route_completed PASSED [ 90%]
+tests/test_users.py::TestGetUsers::test_admin_can_list_users PASSED      [ 90%]
+tests/test_users.py::TestGetUsers::test_driver_cannot_list_users PASSED  [ 91%]
+tests/test_users.py::TestGetUsers::test_response_never_includes_hashed_password PASSED [ 92%]
+tests/test_users.py::TestCreateUser::test_admin_can_create_driver PASSED [ 93%]
+tests/test_users.py::TestCreateUser::test_created_user_response_has_no_password PASSED [ 94%]
+tests/test_users.py::TestCreateUser::test_duplicate_email_returns_409 FAILED [ 95%]
+tests/test_users.py::TestCreateUser::test_short_password_returns_422 PASSED [ 95%]
+tests/test_users.py::TestCreateUser::test_driver_cannot_create_user PASSED [ 96%]
+tests/test_users.py::TestUpdateUser::test_admin_can_deactivate_user PASSED [ 97%]
+tests/test_users.py::TestUpdateUser::test_admin_can_change_role PASSED   [ 98%]
+tests/test_users.py::TestUpdateUser::test_driver_cannot_update_user PASSED [ 99%]
+tests/test_users.py::TestUpdateUser::test_unknown_user_returns_404 PASSED [100%]
+
+================================== FAILURES ===================================
+__________________ TestLogin.test_admin_login_returns_token ___________________
+tests\test_auth.py:16: in test_admin_login_returns_token
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+__________________ TestLogin.test_driver_login_returns_token __________________
+tests\test_auth.py:28: in test_driver_login_returns_token
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_________________ TestGetBins.test_returns_401_without_token __________________
+tests\test_bins.py:89: in test_returns_401_without_token
+    assert response.status_code == 401
+E   assert 200 == 401
+E    +  where 200 = <Response [200 OK]>.status_code
+___________________ TestGetBinById.test_returns_bin_detail ____________________
+tests\test_bins.py:99: in test_returns_bin_detail
+    assert response.status_code == 200
+E   assert 422 == 200
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+_________________ TestGetBinById.test_unknown_id_returns_404 __________________
+tests\test_bins.py:108: in test_unknown_id_returns_404
+    assert response.status_code == 404
+E   assert 422 == 404
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+______________ TestCreateBin.test_duplicate_bin_code_returns_409 ______________
+tests\test_bins.py:166: in test_duplicate_bin_code_returns_409
+    assert response.status_code == 409
+E   assert 400 == 409
+E    +  where 400 = <Response [400 Bad Request]>.status_code
+______________ TestUpdateBin.test_admin_can_update_location_name ______________
+tests\test_bins.py:212: in test_admin_can_update_location_name
+    assert response.status_code == 200
+E   assert 422 == 200
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+______________ TestUpdateBin.test_update_unknown_bin_returns_404 ______________
+tests\test_bins.py:234: in test_update_unknown_bin_returns_404
+    assert response.status_code == 404
+E   assert 422 == 404
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+_______________ TestDeactivateBin.test_admin_can_deactivate_bin _______________
+tests\test_bins.py:247: in test_admin_can_deactivate_bin
+    assert response.status_code == 200
+E   assert 422 == 200
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+_______________ TestCreateUser.test_duplicate_email_returns_409 _______________
+tests\test_users.py:91: in test_duplicate_email_returns_409
+    assert response.status_code == 409
+E   assert 400 == 409
+E    +  where 400 = <Response [400 Bad Request]>.status_code
+============================== warnings summary ===============================
+..\.binwise-venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\.binwise-venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_alerts.py: 60 warnings
+tests/test_analytics.py: 25 warnings
+tests/test_auth.py: 5 warnings
+tests/test_bins.py: 92 warnings
+tests/test_driver.py: 44 warnings
+tests/test_ingest.py: 93 warnings
+tests/test_routes.py: 150 warnings
+tests/test_users.py: 17 warnings
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\.binwise-venv\Lib\site-packages\pydantic\_internal\_fields.py:727: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return fac()
+
+tests/test_analytics.py: 13 warnings
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\binwise-backend\tests\test_analytics.py:24: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow() - timedelta(days=i),
+
+tests/test_analytics.py::TestFillTrends::test_returns_200_for_admin
+tests/test_analytics.py::TestFillTrends::test_returns_list_of_daily_averages
+tests/test_analytics.py::TestFillTrends::test_zone_filter_accepted
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\binwise-backend\app\api\routers\analytics.py:44: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    since = datetime.utcnow() - timedelta(days=days)
+
+tests/test_analytics.py::TestTripsComparison::test_returns_route_comparison_data
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\binwise-backend\tests\test_analytics.py:103: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    completed_at=datetime.utcnow(),
+
+tests/test_analytics.py::TestTripsComparison::test_ai_always_lte_baseline_in_completed_routes
+tests/test_analytics.py::TestTripsComparison::test_ai_always_lte_baseline_in_completed_routes
+tests/test_analytics.py::TestTripsComparison::test_ai_always_lte_baseline_in_completed_routes
+  C:\Users\BLUE-PANTHER\Documents\educational_related\ABU\final level\final_year_projects\codes\binWise\binwise-backend\tests\test_analytics.py:136: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    completed_at=datetime.utcnow() - timedelta(days=i),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_auth.py::TestLogin::test_admin_login_returns_token - assert 401 == 200
+ +  where 401 = <Response [401 Unauthorized]>.status_code
+FAILED tests/test_auth.py::TestLogin::test_driver_login_returns_token - assert 401 == 200
+ +  where 401 = <Response [401 Unauthorized]>.status_code
+FAILED tests/test_bins.py::TestGetBins::test_returns_401_without_token - assert 200 == 401
+ +  where 200 = <Response [200 OK]>.status_code
+FAILED tests/test_bins.py::TestGetBinById::test_returns_bin_detail - assert 422 == 200
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_bins.py::TestGetBinById::test_unknown_id_returns_404 - assert 422 == 404
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_bins.py::TestCreateBin::test_duplicate_bin_code_returns_409 - assert 400 == 409
+ +  where 400 = <Response [400 Bad Request]>.status_code
+FAILED tests/test_bins.py::TestUpdateBin::test_admin_can_update_location_name - assert 422 == 200
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_bins.py::TestUpdateBin::test_update_unknown_bin_returns_404 - assert 422 == 404
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_bins.py::TestDeactivateBin::test_admin_can_deactivate_bin - assert 422 == 200
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_users.py::TestCreateUser::test_duplicate_email_returns_409 - assert 400 == 409
+ +  where 400 = <Response [400 Bad Request]>.status_code
+================ 10 failed, 110 passed, 507 warnings in 53.90s ================
