@@ -10,8 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from app.models import *
 
-# Allow `uvicorn main:app --reload` to resolve `app.*` imports when this file is
-# executed from inside the `app/` directory.
+
 BASE_DIR = Path(__file__).resolve().parent
 PARENT_DIR = BASE_DIR.parent
 if str(PARENT_DIR) not in sys.path:
@@ -59,12 +58,14 @@ def _include_router(module_name: str, prefix: str) -> None:
 
 for module_name, prefix in [
 	("auth", "/api/auth"),
-	("bins", "/api/bins"),
-	("ingest", "/api/ingest"),
-	("alerts", "/api/alerts"),
-	("analytics", "/api/analytics"),
-	("driver", "/api/driver"),
-	("routes", "/api/routes"),
 	("users", "/api/users"),
+	("driver", "/api/driver"),
+	("zones", "/api/zones"),
+	("routes", "/api/routes"),
+	("bins", "/api/bins"),
+	("alerts", "/api/alerts"),
+	("ingest", "/api/ingest"),
+	("analytics", "/api/analytics"),
+	("websocket", "/ws"),
 ]:
 	_include_router(module_name, prefix)
