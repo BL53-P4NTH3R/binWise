@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Leaflet z-index fix ─────────────────────────────────────── */
+.leaflet-pane { z-index: 0 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 5 !important; }
+.leaflet-control { z-index: 5 !important; }
+
+/* ─── Overflow bin pulse animation ──────────────────────────────── */
+@keyframes bin-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(226, 75, 74, 0.6); }
+  70%  { box-shadow: 0 0 0 12px rgba(226, 75, 74, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(226, 75, 74, 0); }
+}
+
+.bin-pulse {
+  animation: bin-pulse 1.5s ease-out infinite;
+}
+
+@keyframes leaflet-bin-pulse {
+  0%, 100% { stroke-opacity: 1; stroke-width: 2; }
+  50% { stroke-opacity: 0.5; stroke-width: 6; }
+}
+
+.bin-marker-overflow {
+  animation: leaflet-bin-pulse 1.5s ease-in-out infinite;
+}
+
+/* ─── Global base styles ─────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #F8F9FA;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar styling ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F8F9FA; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* ─── Admin layout ───────────────────────────────────────────── */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 30;
+}
+
+.admin-main {
+  margin-left: 240px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 1.5rem;
+  background: #F8F9FA;
+}
+
+/* ─── Driver mobile layout ───────────────────────────────────── */
+.driver-layout {
+  max-width: 390px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  background: #F8F9FA;
+}
+
+.driver-bottom-tab {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 390px;
+  z-index: 50;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* ─── Transitions ────────────────────────────────────────────── */
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Map container ─────────────────────────────────────────── */
+.leaflet-container {
+  font-family: 'Inter', system-ui, sans-serif !important;
+  border-radius: 0.75rem;
+}
+
+/* ─── Print styles for route export ─────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  .admin-sidebar { display: none !important; }
+  .admin-main { margin-left: 0 !important; }
+}
+
+/* ─── Custom range slider ────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #E5E7EB;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1D9E75;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(29, 158, 117, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1D9E75;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(29, 158, 117, 0.4);
+}
+
+/* ─── Toggle switch ─────────────────────────────────────────── */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #D1D5DB;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .toggle-slider {
+  background-color: #1D9E75;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
