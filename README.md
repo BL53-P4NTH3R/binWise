@@ -8,10 +8,11 @@
         <img src="https://img.shields.io/badge/TypeScript-5.2-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
         <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
 
-        <strong>An IoT-powered intelligent waste bin monitoring and collection optimisation system for Samaru Campus, Ahmadu Bello University, Zaria, Nigeria.</strong>
-
-        <em>Final Year Project — Department of Computer Science, ABU Zaria, 2026</em>
 </p>
+
+**An IoT-powered intelligent waste bin monitoring and collection optimisation system for Samaru Campus, Ahmadu Bello University, Zaria, Nigeria.**
+
+*Final Year Project — Department of Computer Science, ABU Zaria, 2026*
 ---
  
 ## Table of Contents
