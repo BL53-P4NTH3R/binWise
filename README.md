@@ -1,18 +1,17 @@
 # BinWise — Smart Waste Management System
  
-<div align="center">
-![BinWise](https://img.shields.io/badge/BinWise-v1.0.0-1D9E75?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
- 
-**An IoT-powered intelligent waste bin monitoring and collection optimisation system for Samaru Campus, Ahmadu Bello University, Zaria, Nigeria.**
- 
-*Final Year Project — Department of Computer Science, ABU Zaria, 2026*
- 
-</div>
+<p align="center">
+        <img src="https://img.shields.io/badge/BinWise-v1.0.0-1D9E75?style=for-the-badge" alt="BinWise" />
+        <img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+        <img src="https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+        <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+        <img src="https://img.shields.io/badge/TypeScript-5.2-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+        <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+
+        <strong>An IoT-powered intelligent waste bin monitoring and collection optimisation system for Samaru Campus, Ahmadu Bello University, Zaria, Nigeria.</strong>
+
+        <em>Final Year Project — Department of Computer Science, ABU Zaria, 2026</em>
+</p>
 ---
  
 ## Table of Contents
