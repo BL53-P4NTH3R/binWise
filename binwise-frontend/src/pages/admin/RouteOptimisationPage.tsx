@@ -76,8 +76,9 @@ export default function RouteOptimisationPage() {
   if (loading) return <PageLoader />
 
   // Route bins for map overlay
+  const waypoints = activeRoute?.waypoints ?? []
   const routeBins = activeRoute
-    ? bins.filter(b => activeRoute.waypoints.some(wp => wp.bin_id === b.id))
+    ? bins.filter(b => waypoints.some(wp => wp.bin_id === b.id))
     : []
 
   return (
@@ -90,7 +91,7 @@ export default function RouteOptimisationPage() {
           <BinMap
             bins={bins}
             height="500px"
-            routeWaypoints={activeRoute?.waypoints}
+            routeWaypoints={waypoints}
             routeBins={routeBins}
             showPolyline={!!activeRoute}
           />
@@ -168,7 +169,7 @@ export default function RouteOptimisationPage() {
                 <div>
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Waypoints</h4>
                   <div className="max-h-48 overflow-y-auto space-y-1">
-                    {[...activeRoute.waypoints]
+                    {[...waypoints]
                       .sort((a, b) => a.stop_order - b.stop_order)
                       .map(wp => {
                         const bin = bins.find(b => b.id === wp.bin_id)
@@ -227,7 +228,8 @@ export default function RouteOptimisationPage() {
           <div className="py-8 text-center text-sm text-gray-400">No routes generated yet</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            {/* Desktop table */}
+            <table className="hidden md:table w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="px-5 py-3 text-xs font-semibold uppercase text-gray-500">Route</th>
@@ -264,6 +266,46 @@ export default function RouteOptimisationPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile card layout */}
+            <div className="md:hidden space-y-3 p-4">
+              {routes.map(route => (
+                <div
+                  key={route.id}
+                  className={`mobile-card cursor-pointer ${activeRoute?.id === route.id ? 'border-primary ring-1 ring-primary/20' : ''}`}
+                  onClick={() => setActiveRoute(route)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-bold text-gray-900">{route.route_code}</p>
+                    <StatusBadge label={route.status.replace('_', ' ')} color={statusColor(route.status)} />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Bins</span>
+                      <span className="mobile-card-value">{route.bin_count}</span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">AI Distance</span>
+                      <span className="mobile-card-value text-primary font-semibold">{route.ai_distance_km?.toFixed(1) ?? '—'} km</span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Saved</span>
+                      <span className="mobile-card-value">
+                        {route.ai_distance_km && route.baseline_distance_km ? (
+                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary">
+                            {savingsPct(route.ai_distance_km, route.baseline_distance_km)}%
+                          </span>
+                        ) : '—'}
+                      </span>
+                    </div>
+                    <div className="mobile-card-row">
+                      <span className="mobile-card-label">Generated</span>
+                      <span className="mobile-card-value text-gray-500">{fmtDate(route.generated_at, 'dd MMM, HH:mm')}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

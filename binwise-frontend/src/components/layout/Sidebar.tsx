@@ -1,9 +1,17 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 
+interface SidebarProps {
+  collapsed: boolean
+  onToggleCollapse: () => void
+  mobileOpen: boolean
+  onCloseMobile: () => void
+}
+
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { to: '/map',       label: 'Live Map',  icon: MapIcon },
   { to: '/bins',      label: 'Bins',      icon: BinIcon },
+  { to: '/sensor-nodes', label: 'Sensor Nodes', icon: SensorNodeIcon },
   { to: '/routes',    label: 'Routes',    icon: RouteIcon },
   { to: '/analytics', label: 'Analytics', icon: ChartIcon },
   { to: '/alerts',    label: 'Alerts',    icon: AlertIcon },
@@ -11,7 +19,7 @@ const navItems = [
   { to: '/settings',  label: 'Settings',  icon: SettingsIcon },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }: SidebarProps) {
   const navigate = useNavigate()
   const userRaw = localStorage.getItem('bw_user')
   const user = userRaw ? (JSON.parse(userRaw) as { full_name?: string; email?: string }) : null
@@ -22,65 +30,136 @@ export default function Sidebar() {
     navigate('/login')
   }
 
+  const handleNavClick = () => {
+    // Close drawer on mobile when a nav item is clicked
+    onCloseMobile()
+  }
+
   return (
-    <aside className="admin-sidebar flex flex-col bg-gray-900 text-white">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-800">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-          <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </div>
-        <div>
-          <h1 className="text-base font-bold tracking-tight">BinWise</h1>
-          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Smart Waste</p>
-        </div>
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                isActive
-                  ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`
-            }
-          >
-            <item.icon />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* User info & logout */}
-      <div className="border-t border-gray-800 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold">
-            {user?.full_name?.[0]?.toUpperCase() ?? 'A'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">{user?.full_name || 'Admin'}</p>
-            <p className="truncate text-xs text-gray-400">{user?.email || ''}</p>
-          </div>
-        </div>
+      <aside
+        className={`admin-sidebar relative flex flex-col bg-gray-900 text-white transition-all duration-300 ease-in-out ${
+          collapsed ? 'sidebar-collapsed' : ''
+        } ${mobileOpen ? 'sidebar-mobile-open' : ''}`}
+      >
+        {/* Dedicated collapse toggle — absolute pill on the sidebar's right edge, desktop only */}
         <button
-          onClick={handleLogout}
-          className="mt-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="sidebar-edge-toggle hidden lg:flex"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <svg
+            className={`h-3.5 w-3.5 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
-          Log out
         </button>
-      </div>
-    </aside>
+
+        {/* Logo — purely decorative in this sidebar; not a toggle */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-800">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
+            <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          {!collapsed && (
+            <div className="sidebar-label min-w-0">
+              <h1 className="text-base font-bold tracking-tight">BinWise</h1>
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Smart Waste</p>
+            </div>
+          )}
+          {/* Close button — visible only on mobile drawer */}
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden ml-auto flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          {navItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                } ${collapsed ? 'justify-center' : ''}`
+              }
+            >
+              <span className="flex-shrink-0"><item.icon /></span>
+              {!collapsed && <span className="sidebar-label truncate">{item.label}</span>}
+              {/* Tooltip on collapsed state */}
+              {collapsed && (
+                <span className="sidebar-tooltip">{item.label}</span>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* User info & logout */}
+        <div className="border-t border-gray-800 px-4 py-4">
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold">
+                {user?.full_name?.[0]?.toUpperCase() ?? 'A'}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+                title="Log out"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-xs font-bold">
+                  {user?.full_name?.[0]?.toUpperCase() ?? 'A'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium">{user?.full_name || 'Admin'}</p>
+                  <p className="truncate text-xs text-gray-400">{user?.email || ''}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="mt-3 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Log out
+              </button>
+            </>
+          )}
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -109,6 +188,15 @@ function BinIcon() {
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  )
+}
+
+function SensorNodeIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
     </svg>
   )
 }

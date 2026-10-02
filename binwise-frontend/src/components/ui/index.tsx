@@ -275,15 +275,15 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
   if (!open) return null
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
-        className={`relative w-full ${modalSizes[size]} rounded-2xl bg-white shadow-2xl fade-in`}
+        className={`relative w-full ${modalSizes[size]} rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl fade-in max-h-[90vh] overflow-y-auto`}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 sm:px-6 py-4 sticky top-0 bg-white z-10 rounded-t-2xl">
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
@@ -294,7 +294,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-5 sm:px-6 py-5">{children}</div>
       </div>
     </div>
   )

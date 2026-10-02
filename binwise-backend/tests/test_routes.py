@@ -160,6 +160,26 @@ class TestGenerateRoute:
         assert data["ai_distance_km"] is not None
         assert data["baseline_distance_km"] is not None
 
+    def test_generation_preserves_live_bin_fill_and_snapshots_it(
+        self, client: TestClient, db: Session,
+        overflow_bin: Bin, admin_headers: dict
+    ):
+        """Route generation must not reset the live fill percentage."""
+        overflow_bin.fill_pct = 94.0
+        db.add(overflow_bin)
+        db.commit()
+
+        response = client.post(
+            f"{ROUTES_URL}/generate",
+            headers=admin_headers,
+            json={"threshold_pct": 90.0},
+        )
+
+        assert response.status_code == 201
+        db.refresh(overflow_bin)
+        assert overflow_bin.fill_pct == 94.0
+        assert response.json()["waypoints"][0]["fill_pct_at_generation"] == 94.0
+
     def test_ai_distance_lte_baseline_in_response(
         self, client: TestClient, overflow_bin: Bin, admin_headers: dict
     ):

@@ -40,15 +40,15 @@ export default function DashboardPage() {
   if (loading) return <PageLoader />
 
   return (
-    <div className="space-y-6 fade-in">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-6 fade-in w-full min-w-0">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500">Real-time waste management overview</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          Live — auto-refreshing every 30s
+        <div className="flex items-center gap-2 text-xs text-gray-400 flex-shrink-0 pt-1">
+          <span className="h-2 w-2 rounded-full bg-primary animate-pulse flex-shrink-0" />
+          Live · 30s refresh
         </div>
       </div>
 

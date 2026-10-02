@@ -73,7 +73,7 @@ export default function UserManagementPage() {
   if (loading) return <PageLoader />
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-6 fade-in w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -98,33 +98,96 @@ export default function UserManagementPage() {
           action={<Btn onClick={() => setModalOpen(true)}>Invite first user</Btn>}
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">User</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Email</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Role</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Last Login</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${
-                        user.role === 'admin' ? 'bg-primary' : 'bg-info'
-                      }`}>
-                        {getInitials(user.full_name)}
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">User</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Email</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Role</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Last Login</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {users.map(user => (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${
+                          user.role === 'admin' ? 'bg-primary' : 'bg-info'
+                        }`}>
+                          {getInitials(user.full_name)}
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">{user.full_name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">{user.full_name}</span>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-5 py-3">
+                      <select
+                        value={user.role}
+                        onChange={e => handleRoleChange(user.id, e.target.value)}
+                        className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-medium outline-none focus:border-primary cursor-pointer"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="driver">Driver</option>
+                      </select>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        {user.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs text-gray-500">{fmtDate(user.last_login)}</td>
+                    <td className="px-5 py-3">
+                      <button
+                        onClick={() => setConfirmToggle(user)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          user.is_active
+                            ? 'text-danger hover:bg-red-50'
+                            : 'text-primary hover:bg-green-50'
+                        }`}
+                      >
+                        {user.is_active ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card layout */}
+          <div className="md:hidden space-y-3">
+            {users.map(user => (
+              <div key={user.id} className="mobile-card">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${
+                      user.role === 'admin' ? 'bg-primary' : 'bg-info'
+                    }`}>
+                      {getInitials(user.full_name)}
                     </div>
-                  </td>
-                  <td className="px-5 py-3 text-sm text-gray-600">{user.email}</td>
-                  <td className="px-5 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{user.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex flex-shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Role</span>
                     <select
                       value={user.role}
                       onChange={e => handleRoleChange(user.id, e.target.value)}
@@ -133,33 +196,26 @@ export default function UserManagementPage() {
                       <option value="admin">Admin</option>
                       <option value="driver">Driver</option>
                     </select>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      user.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-xs text-gray-500">{fmtDate(user.last_login)}</td>
-                  <td className="px-5 py-3">
-                    <button
-                      onClick={() => setConfirmToggle(user)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                        user.is_active
-                          ? 'text-danger hover:bg-red-50'
-                          : 'text-primary hover:bg-green-50'
-                      }`}
-                    >
-                      {user.is_active ? 'Deactivate' : 'Reactivate'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Last Login</span>
+                    <span className="mobile-card-value text-gray-500">{fmtDate(user.last_login)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() => setConfirmToggle(user)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                      user.is_active ? 'text-danger hover:bg-red-50' : 'text-primary hover:bg-green-50'
+                    }`}
+                  >
+                    {user.is_active ? 'Deactivate' : 'Reactivate'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Invite modal */}

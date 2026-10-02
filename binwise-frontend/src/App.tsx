@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { ProtectedRoute } from './components/ui'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 import AdminLayout from './components/layout/AdminLayout'
 
 // Shared pages
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 
@@ -11,6 +13,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import LiveMapPage from './pages/admin/LiveMapPage'
 import BinManagementPage from './pages/admin/BinManagementPage'
+import SensorNodesPage from './pages/admin/SensorNodesPage'
 import RouteOptimisationPage from './pages/admin/RouteOptimisationPage'
 import AnalyticsPage from './pages/admin/AnalyticsPage'
 import AlertsPage from './pages/admin/AlertsPage'
@@ -24,6 +27,7 @@ import DriverHistoryPage from './pages/driver/DriverHistoryPage'
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Toaster
         position="top-right"
@@ -56,6 +60,7 @@ export default function App() {
 
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
@@ -70,6 +75,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/map" element={<LiveMapPage />} />
           <Route path="/bins" element={<BinManagementPage />} />
+          <Route path="/sensor-nodes" element={<SensorNodesPage />} />
           <Route path="/routes" element={<RouteOptimisationPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
@@ -104,9 +110,9 @@ export default function App() {
         />
 
         {/* Fallback */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

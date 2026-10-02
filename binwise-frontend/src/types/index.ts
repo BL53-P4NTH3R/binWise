@@ -158,6 +158,36 @@ export interface AlertSettingsUpdate {
   notify_inapp?: boolean
 }
 
+// ─── Sensor Node ─────────────────────────────────────────────────────────────
+export interface SensorNode {
+  id: string
+  node_id: string
+  bin_id: string | null
+  firmware_v: string | null
+  gsm_number: string | null
+  is_active: boolean
+  last_seen: string | null
+  // Populated from backend join (may or may not be present):
+  bin_code?: string
+  location_name?: string
+}
+
+export interface SensorNodeCreate {
+  node_id: string
+  bin_id?: string | null
+  firmware_v?: string | null
+  gsm_number?: string | null
+  is_active?: boolean
+}
+
+export interface SensorNodeUpdate {
+  node_id?: string
+  bin_id?: string | null
+  firmware_v?: string | null
+  gsm_number?: string | null
+  is_active?: boolean
+}
+
 // ─── Analytics ───────────────────────────────────────────────────────────────
 export interface FillTrend {
   date: string

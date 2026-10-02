@@ -9,7 +9,7 @@ type TabFilter = 'open' | 'resolved' | 'all'
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([])
-  const [settings, setSettings] = useState<AlertSettings | null>(null)
+  const [_settings, setSettings] = useState<AlertSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<TabFilter>('open')
   const [savingSettings, setSavingSettings] = useState(false)

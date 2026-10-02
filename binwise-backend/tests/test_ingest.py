@@ -18,17 +18,17 @@ INGEST_URL = "/api/ingest"
 class TestIngestValidPayload:
     """Happy-path telemetry ingestion."""
 
-    def test_valid_payload_returns_200(
+    def test_valid_payload_returns_201(
         self, client: TestClient, test_sensor_node: SensorNode
     ):
-        """A well-formed payload from a known sensor node returns 200."""
+        """A well-formed payload from a known sensor node returns 201."""
         response = client.post(INGEST_URL, json={
             "sensor_id": "US-Node-402",
             "fill_pct": 55.0,
             "battery_pct": 78.0,
             "rssi_dbm": -72,
         })
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     def test_ingest_creates_sensor_reading_row(
         self, client: TestClient, db: Session, test_sensor_node: SensorNode

@@ -17,7 +17,7 @@ from app.services.alert_service import check_alerts
 router = APIRouter(tags=["ingest"])
 
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 def ingest_reading(payload: SensorPayload, db: Session = Depends(get_db)) -> dict[str, str]:
 	"""Persist a sensor reading and update the related bin state."""
 	node = db.exec(select(SensorNode).where(SensorNode.node_id == payload.sensor_id, SensorNode.is_active == True)).first()  # noqa: E712

@@ -19,13 +19,10 @@ export default function DriverRoutePage() {
   const [skipReason, setSkipReason] = useState('')
 
   const fetchData = useCallback(async () => {
+    // Fetch route first
     try {
-      const [routeRes, binsRes] = await Promise.all([
-        driverApi.getRoute(),
-        binsApi.getLive(),
-      ])
-      setRoute(routeRes.data)
-      setBins(binsRes.data)
+      const { data } = await driverApi.getRoute()
+      setRoute(data)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 404) {
@@ -33,9 +30,17 @@ export default function DriverRoutePage() {
       } else {
         toast.error('Failed to load route')
       }
-    } finally {
-      setLoading(false)
     }
+
+    // Fetch bins independently — don't block route if this fails
+    try {
+      const { data } = await binsApi.getLive()
+      setBins(data)
+    } catch {
+      console.warn('Could not fetch bins for driver')
+    }
+
+    setLoading(false)
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
@@ -67,8 +72,11 @@ export default function DriverRoutePage() {
     : null
   const allDone = total > 0 && collected === total
   const routeBins = route
-    ? bins.filter(b => route.waypoints.some(wp => wp.bin_id === b.id))
+    ? bins.filter(b => (route.waypoints ?? []).some(wp => wp.bin_id === b.id))
     : []
+
+  // Use routeBins for map if available, otherwise fall back to all bins
+  const mapBins = routeBins.length > 0 ? routeBins : bins
 
   if (loading) return (
     <div className="driver-layout flex items-center justify-center min-h-screen">
@@ -118,46 +126,52 @@ export default function DriverRoutePage() {
         </div>
       ) : (
         <>
-          {/* Map — top 55% */}
+          {/* Map */}
           <div style={{ height: '45vh' }}>
             <BinMap
-              bins={routeBins}
+              bins={mapBins}
               height="100%"
               className="rounded-none"
-              routeWaypoints={route?.waypoints}
+              routeWaypoints={route?.waypoints ?? []}
               routeBins={routeBins}
-              showPolyline
+              showPolyline={routeBins.length > 1}
               selectedBinId={currentBin?.id}
             />
           </div>
 
           {/* Bottom action sheet */}
           <div className="px-4 py-4 space-y-4">
-            {/* Current stop card */}
-            {currentStop && currentBin && (
+            {/* Current stop card — works even without full bin details */}
+            {currentStop && (
               <div className="rounded-xl bg-white p-4 shadow-md border border-gray-100 fade-in">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white text-sm font-bold">
                     {currentStop.stop_order}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900">{currentBin.bin_code}</p>
-                    <p className="text-xs text-gray-500">{currentBin.location_name}</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {currentBin?.bin_code ?? `Stop ${currentStop.stop_order}`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {currentBin?.location_name ?? 'Collection point'}
+                    </p>
                   </div>
                   <FillBadge
-                    status={currentStop.fill_pct_at_generation != null ? fillPctToStatus(currentStop.fill_pct_at_generation) : currentBin.fill_status}
-                    pct={currentStop.fill_pct_at_generation ?? currentBin.fill_pct}
+                    status={currentStop.fill_pct_at_generation != null
+                      ? fillPctToStatus(currentStop.fill_pct_at_generation)
+                      : currentBin?.fill_status ?? 'warning'}
+                    pct={currentStop.fill_pct_at_generation ?? currentBin?.fill_pct}
                   />
                 </div>
                 <FillBar
-                  pct={currentStop.fill_pct_at_generation ?? currentBin.fill_pct}
+                  pct={currentStop.fill_pct_at_generation ?? currentBin?.fill_pct ?? 0}
                   showLabel
                   height="h-3"
                 />
 
                 {/* Collect button */}
                 <button
-                  onClick={() => handleCollect(currentBin.id)}
+                  onClick={() => handleCollect(currentStop.bin_id)}
                   disabled={collecting}
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-base font-bold text-white shadow-lg shadow-primary/30 transition-all active:scale-[0.98] disabled:bg-primary-300"
                 >

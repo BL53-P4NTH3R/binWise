@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Leaflet z-index fix ─────────────────────────────────────── */
+/* ─── Leaflet z-index fix ─────────────────────────────────── */
 .leaflet-pane { z-index: 0 !important; }
 .leaflet-top, .leaflet-bottom { z-index: 5 !important; }
 .leaflet-control { z-index: 5 !important; }
 
-/* ─── Overflow bin pulse animation ──────────────────────────────── */
+/* ─── Overflow bin pulse animation ──────────────────────────── */
 @keyframes bin-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(226, 75, 74, 0.6); }
   70%  { box-shadow: 0 0 0 12px rgba(226, 75, 74, 0); }
@@ -52,6 +52,7 @@ body {
   min-height: 100vh;
 }
 
+/* ─── Sidebar — Desktop (>= 1024px) ────────────────────────── */
 .admin-sidebar {
   width: 240px;
   flex-shrink: 0;
@@ -61,14 +62,126 @@ body {
   height: 100vh;
   overflow-y: auto;
   z-index: 30;
+  transition: width 0.3s ease-in-out;
 }
 
+.admin-sidebar.sidebar-collapsed {
+  width: 64px;
+}
+
+/* ─── Sidebar edge toggle — the dedicated expand/collapse pill ── */
+/* Straddling the right border of the sidebar so it's always visible */
+.sidebar-edge-toggle {
+  position: absolute;
+  top: 72px;           /* below the logo header area */
+  right: -14px;        /* half in, half out of the sidebar border */
+  z-index: 40;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  color: #6B7280;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.sidebar-edge-toggle:hover {
+  background: #F0FDF4;
+  color: #1D9E75;
+  border-color: #1D9E75;
+  box-shadow: 0 4px 12px rgba(29, 158, 117, 0.2);
+}
+
+.sidebar-edge-toggle:focus-visible {
+  outline: 2px solid #1D9E75;
+  outline-offset: 2px;
+}
+
+/* Sidebar labels fade out when collapsed */
+.sidebar-collapsed .sidebar-label {
+  display: none;
+}
+
+/* Tooltip for collapsed sidebar nav items */
+.sidebar-tooltip {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 4px 10px;
+  background: #1F2937;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: #1F2937;
+}
+
+.sidebar-collapsed .group:hover .sidebar-tooltip {
+  display: block;
+}
+
+/* ─── Sidebar — Mobile/Tablet (< 1024px) ──────────────────── */
+@media (max-width: 1023px) {
+  .admin-sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    z-index: 50;
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .admin-sidebar.sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Always show labels on mobile drawer (ignore collapsed state) */
+  .admin-sidebar.sidebar-mobile-open .sidebar-label {
+    display: block;
+  }
+
+  .admin-sidebar.sidebar-mobile-open .sidebar-tooltip {
+    display: none !important;
+  }
+}
+
+/* Mobile sidebar backdrop */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 40;
+}
+
+/* ─── Admin main area ───────────────────────────────────────── */
 .admin-main {
-  margin-left: 240px;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  margin-left: 0;
+  /* Prevent any child element from causing horizontal page scroll */
+  overflow-x: hidden;
+  min-width: 0;
 }
 
 .admin-header {
@@ -77,17 +190,29 @@ body {
   z-index: 20;
   background: white;
   border-bottom: 1px solid #E5E7EB;
+  /* Prevent header content overflow */
+  min-width: 0;
 }
 
 .admin-content {
   flex: 1;
-  padding: 1.5rem;
+  padding: 1rem;
   background: #F8F9FA;
+  /* Ensure content never forces wider than viewport */
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (min-width: 640px) {
+  .admin-content {
+    padding: 1.5rem;
+  }
 }
 
 /* ─── Driver mobile layout ───────────────────────────────────── */
 .driver-layout {
-  max-width: 390px;
+  max-width: 640px;
   margin: 0 auto;
   min-height: 100vh;
   position: relative;
@@ -100,7 +225,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 390px;
+  max-width: 640px;
   z-index: 50;
   background: white;
   border-top: 1px solid #E5E7EB;
@@ -201,4 +326,53 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
   transform: translateX(20px);
+}
+
+/* ─── Mobile card layout for tables ──────────────────────────── */
+.mobile-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* Critical: card must never exceed the available width */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mobile-card + .mobile-card {
+  margin-top: 0.75rem;
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  min-width: 0;
+}
+
+.mobile-card-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.mobile-card-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  text-align: right;
+  /* Prevent long strings (emails, locations) from overflowing */
+  min-width: 0;
+  max-width: 65%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }

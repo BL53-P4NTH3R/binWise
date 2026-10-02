@@ -1,0 +1,198 @@
+/**
+ * BinWise — main.ino  (TEMPORARY DIAGNOSTIC BUILD)
+ * ─────────────────────────────────────────────────────────────────
+ * This is a debug variant of main.ino with numbered checkpoints
+ * and Serial.flush() calls added after every major step in setup().
+ *
+ * WHY: Serial output is buffered. If a Task Watchdog Timer reset
+ * (TG1WDT_SYS_RST) happens, any print statements that haven't been
+ * physically transmitted over UART yet are lost — so the "last line
+ * you saw" isn't necessarily where execution actually stopped.
+ *
+ * Forcing Serial.flush() after each checkpoint guarantees that
+ * whatever CHECKPOINT number is the last one printed is genuinely
+ * the last step that completed before the reset.
+ *
+ * HOW TO USE:
+ *   1. Flash this file in place of your normal main.ino
+ *   2. Open Serial Monitor at 115200 baud
+ *   3. Note the highest [CHECKPOINT n] that prints before it reboots
+ *   4. Report that number back — it tells us exactly which call hangs
+ *   5. Once found, revert to your normal main.ino
+ * ─────────────────────────────────────────────────────────────────
+ */
+
+#include <Arduino.h>
+#include "config.h"
+#include "ultrasonic_handler.h"
+#include "wifi_handler.h"
+
+RTC_DATA_ATTR int boot_count = 0;
+
+void initLeds();
+void updateLeds(float fill_pct);
+void ledSelfTest();
+void enterDeepSleep();
+void printBanner();
+float readSimulatedBattery();
+
+// Helper: print + guarantee it's physically transmitted before continuing
+static void checkpoint(int n, const char* label) {
+  Serial.printf("[CHECKPOINT %d] %s\n", n, label);
+  Serial.flush();
+  delay(50); // small buffer for UART transmission
+}
+
+void setup() {
+
+#if DEBUG_SERIAL
+  Serial.begin(SERIAL_BAUD);
+  delay(500);
+  printBanner();
+#endif
+
+  boot_count++;
+  LOGF("[BOOT] Wake #%d  (SLEEP_SECONDS = %d)\n",
+       boot_count, SLEEP_SECONDS);
+  Serial.flush();
+
+  checkpoint(1, "About to initLeds()");
+  initLeds();
+  checkpoint(2, "initLeds() done, about to ultrasonicInit()");
+
+  ultrasonicInit();
+  checkpoint(3, "ultrasonicInit() done");
+
+  if (boot_count == 1) {
+    checkpoint(4, "About to ledSelfTest()");
+    ledSelfTest();
+    checkpoint(5, "ledSelfTest() done");
+  }
+
+  checkpoint(6, "About to getFillPct()");
+  float fill_pct = getFillPct();
+  checkpoint(7, "getFillPct() done");
+
+  float battery_pct = readSimulatedBattery();
+  checkpoint(8, "readSimulatedBattery() done");
+
+  updateLeds(fill_pct);
+  checkpoint(9, "updateLeds() done, about to wifiInit()");
+
+  bool wifi_ready = wifiInit();
+  checkpoint(10, "wifiInit() returned");
+
+  int http_code = -1;
+  int rssi_dbm  = -999;
+
+  if (wifi_ready) {
+    checkpoint(11, "About to wifiGetRSSI()");
+    rssi_dbm  = wifiGetRSSI();
+    checkpoint(12, "wifiGetRSSI() done, about to wifiPostReading()");
+
+    http_code = wifiPostReading(fill_pct, battery_pct, rssi_dbm);
+    checkpoint(13, "wifiPostReading() returned");
+
+    if (http_code == 201) {
+      LOGLN("[CYCLE] Reading sent to BinWise backend successfully");
+      digitalWrite(PIN_LED_TX, HIGH);
+      delay(500);
+      digitalWrite(PIN_LED_TX, LOW);
+    } else {
+      LOGF("[CYCLE] Transmission failed (code: %d)\n", http_code);
+    }
+
+    checkpoint(14, "About to wifiPowerDown()");
+    wifiPowerDown();
+    checkpoint(15, "wifiPowerDown() done");
+
+  } else {
+    LOGLN("[CYCLE] WiFi connect failed — skipping transmission");
+  }
+
+  checkpoint(16, "About to enter deep sleep");
+
+  LOGLN("[SUMMARY] ──────────────────────────────────────");
+  LOGF("[SUMMARY] Node ID    : %s\n",   NODE_ID);
+  LOGF("[SUMMARY] Fill level : %.1f%%\n", fill_pct);
+  LOGF("[SUMMARY] Battery    : %.1f%%\n", battery_pct);
+  LOGF("[SUMMARY] RSSI       : %d dBm\n", rssi_dbm);
+  LOGF("[SUMMARY] HTTP code  : %d\n",    http_code);
+  LOGF("[SUMMARY] Boot count : %d\n",   boot_count);
+  Serial.flush();
+
+  enterDeepSleep();
+}
+
+void loop() {
+  // Nothing here — deep sleep pattern means loop() never runs
+}
+
+void initLeds() {
+  pinMode(PIN_LED_OVERFLOW, OUTPUT);
+  pinMode(PIN_LED_WARNING,  OUTPUT);
+  pinMode(PIN_LED_NORMAL,   OUTPUT);
+  pinMode(PIN_LED_TX,       OUTPUT);
+  digitalWrite(PIN_LED_OVERFLOW, LOW);
+  digitalWrite(PIN_LED_WARNING,  LOW);
+  digitalWrite(PIN_LED_NORMAL,   LOW);
+  digitalWrite(PIN_LED_TX,       LOW);
+}
+
+void updateLeds(float fill_pct) {
+  digitalWrite(PIN_LED_OVERFLOW, LOW);
+  digitalWrite(PIN_LED_WARNING,  LOW);
+  digitalWrite(PIN_LED_NORMAL,   LOW);
+
+  if (fill_pct > OVERFLOW_THRESHOLD_PCT) {
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(PIN_LED_OVERFLOW, HIGH); delay(200);
+      digitalWrite(PIN_LED_OVERFLOW, LOW);  delay(200);
+    }
+    digitalWrite(PIN_LED_OVERFLOW, HIGH);
+  } else if (fill_pct >= WARNING_THRESHOLD_PCT) {
+    digitalWrite(PIN_LED_WARNING, HIGH);
+  } else {
+    digitalWrite(PIN_LED_NORMAL, HIGH);
+  }
+}
+
+void ledSelfTest() {
+  digitalWrite(PIN_LED_OVERFLOW, HIGH); delay(300);
+  digitalWrite(PIN_LED_WARNING,  HIGH); delay(300);
+  digitalWrite(PIN_LED_NORMAL,   HIGH); delay(300);
+  digitalWrite(PIN_LED_TX,       HIGH); delay(300);
+  digitalWrite(PIN_LED_OVERFLOW, LOW);
+  digitalWrite(PIN_LED_WARNING,  LOW);
+  digitalWrite(PIN_LED_NORMAL,   LOW);
+  digitalWrite(PIN_LED_TX,       LOW);
+  delay(300);
+}
+
+float readSimulatedBattery() {
+  return 85.0f;
+}
+
+void enterDeepSleep() {
+  LOGF("[SLEEP] Entering deep sleep for %d seconds...\n", SLEEP_SECONDS);
+  delay(100);
+  Serial.flush();
+  esp_sleep_enable_timer_wakeup((uint64_t)SLEEP_SECONDS * 1000000ULL);
+  esp_deep_sleep_start();
+}
+
+void printBanner() {
+  Serial.println();
+  Serial.println(F("╔══════════════════════════════════════════════╗"));
+  Serial.println(F("║       BinWise — Sensor Node Firmware         ║"));
+  Serial.println(F("║       ABU Zaria · Samaru Campus · 2026       ║"));
+  Serial.println(F("╠══════════════════════════════════════════════╣"));
+  Serial.print  (F("║  Node ID  : ")); Serial.println(F(NODE_ID));
+  Serial.print  (F("║  API host : ")); Serial.println(F(API_HOST));
+  Serial.print  (F("║  Bin ht.  : ")); Serial.print(BIN_HEIGHT_CM);
+  Serial.println(F(" cm"));
+  Serial.print  (F("║  Sleep    : ")); Serial.print(SLEEP_SECONDS);
+  Serial.println(F(" s"));
+  Serial.println(F("╚══════════════════════════════════════════════╝"));
+  Serial.println();
+}

@@ -63,6 +63,7 @@ for module_name, prefix in [
 	("zones", "/api/zones"),
 	("routes", "/api/routes"),
 	("bins", "/api/bins"),
+	("sensor_nodes", "/api/sensor-nodes"),
 	("alerts", "/api/alerts"),
 	("ingest", "/api/ingest"),
 	("analytics", "/api/analytics"),

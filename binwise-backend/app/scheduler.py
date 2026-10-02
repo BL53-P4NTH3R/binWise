@@ -23,7 +23,10 @@ def check_offline_sensors() -> None:
 		cutoff = datetime.now(timezone.utc) - timedelta(minutes=offline_timeout_min)
 		bins = session.exec(select(Bin).where(Bin.status == BinStatus.active)).all()
 		for bin_record in bins:
-			if bin_record.last_reading is None or bin_record.last_reading >= cutoff:
+			last_reading = bin_record.last_reading
+			if last_reading is not None and last_reading.tzinfo is None:
+				last_reading = last_reading.replace(tzinfo=timezone.utc)
+			if last_reading is None or last_reading >= cutoff:
 				continue
 			bin_record.status = BinStatus.offline
 		session.add_all(bins)

@@ -10,6 +10,9 @@ import type {
   BinUpdate,
   FillTrend,
   RouteRead,
+  SensorNode,
+  SensorNodeCreate,
+  SensorNodeUpdate,
   TripComparison,
   Token,
   User,
@@ -50,6 +53,22 @@ export const binsApi = {
 
   remove: (id: string) =>
     client.delete<BinRead>(`/bins/${id}`),
+}
+
+// ─── Sensor Nodes ────────────────────────────────────────────────────────────
+
+export const sensorNodesApi = {
+  getAll: () =>
+    client.get<SensorNode[]>('/sensor-nodes'),
+
+  create: (data: SensorNodeCreate) =>
+    client.post<SensorNode>('/sensor-nodes', data),
+
+  update: (id: string, data: SensorNodeUpdate) =>
+    client.patch<SensorNode>(`/sensor-nodes/${id}`, data),
+
+  remove: (id: string) =>
+    client.delete(`/sensor-nodes/${id}`),
 }
 
 // ─── Zones ───────────────────────────────────────────────────────────────────

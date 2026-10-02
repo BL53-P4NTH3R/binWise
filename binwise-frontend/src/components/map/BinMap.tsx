@@ -50,15 +50,20 @@ function createNumberedIcon(num: number, color: string): L.DivIcon {
 
 // ─── Map center helper ────────────────────────────────────────────────────────
 
-function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
+function MapUpdater({ center, zoom, bins }: { center: [number, number]; zoom: number; bins: BinLive[] }) {
   const map = useMap()
   const initial = useRef(true)
   useEffect(() => {
     if (initial.current) {
       initial.current = false
-      map.setView(center, zoom)
+      if (bins.length > 0) {
+        const bounds = L.latLngBounds(bins.map(b => [b.latitude, b.longitude] as [number, number]))
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 })
+      } else {
+        map.setView(center, zoom)
+      }
     }
-  }, [map, center, zoom])
+  }, [map, center, zoom, bins])
   return null
 }
 
@@ -108,7 +113,7 @@ export default function BinMap({
       className={`rounded-xl ${className}`}
       scrollWheelZoom
     >
-      <MapUpdater center={center} zoom={zoom} />
+      <MapUpdater center={center} zoom={zoom} bins={bins} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

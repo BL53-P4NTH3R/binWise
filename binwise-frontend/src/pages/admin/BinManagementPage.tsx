@@ -5,7 +5,7 @@ import type { BinRead, Zone, BinCreate, BinUpdate } from '../../types'
 import {
   Btn, Input, Select, Modal, PageLoader, Empty, FillBadge, FillBar, ConfirmDialog,
 } from '../../components/ui'
-import { fmtRelative, fmtDate } from '../../utils'
+import { fmtRelative } from '../../utils'
 
 export default function BinManagementPage() {
   const [bins, setBins] = useState<BinRead[]>([])
@@ -109,7 +109,7 @@ export default function BinManagementPage() {
   const zoneOpts = zones.map(z => ({ value: z.id, label: z.name }))
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-6 fade-in w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -125,21 +125,19 @@ export default function BinManagementPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search by bin code or location..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none
-                       placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+      <div className="flex flex-col gap-3">
+        <input
+          type="text"
+          placeholder="Search by bin code or location..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none
+                     placeholder-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary sm:w-auto"
         >
           <option value="">All statuses</option>
           <option value="normal">Normal</option>
@@ -162,76 +160,117 @@ export default function BinManagementPage() {
           action={<Btn onClick={openCreate}>Add first bin</Btn>}
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Bin ID</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Location</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Fill %</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Last Reading</th>
-                <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map(bin => (
-                <tr
-                  key={bin.id}
-                  className={`hover:bg-gray-50 transition-colors ${
-                    bin.fill_status === 'overflow' ? 'bg-red-50/40' : ''
-                  }`}
-                >
-                  <td className="px-5 py-3">
-                    <p className="text-sm font-semibold text-gray-900">{bin.bin_code}</p>
-                    {bin.zone_name && <p className="text-xs text-gray-400">{bin.zone_name}</p>}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-gray-700">{bin.location_name}</td>
-                  <td className="px-5 py-3 w-44">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <FillBar pct={bin.fill_pct} status={bin.fill_status} />
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Bin ID</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Location</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Fill %</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Last Reading</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map(bin => (
+                  <tr
+                    key={bin.id}
+                    className={`hover:bg-gray-50 transition-colors ${
+                      bin.fill_status === 'overflow' ? 'bg-red-50/40' : ''
+                    }`}
+                  >
+                    <td className="px-5 py-3">
+                      <p className="text-sm font-semibold text-gray-900">{bin.bin_code}</p>
+                      {bin.zone_name && <p className="text-xs text-gray-400">{bin.zone_name}</p>}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-gray-700">{bin.location_name}</td>
+                    <td className="px-5 py-3 w-44">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <FillBar pct={bin.fill_pct} status={bin.fill_status} />
+                        </div>
+                        <FillBadge status={bin.fill_status} pct={bin.fill_pct} />
                       </div>
-                      <FillBadge status={bin.fill_status} pct={bin.fill_pct} />
-                    </div>
-                  </td>
-                  <td className="px-5 py-3">
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                        bin.status === 'active' ? 'bg-green-100 text-green-700' :
+                        bin.status === 'offline' ? 'bg-gray-100 text-gray-600' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {bin.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs text-gray-500">{fmtRelative(bin.last_reading)}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEdit(bin)}
+                          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          title="Edit"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(bin)}
+                          className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-danger"
+                          title="Deactivate"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card layout */}
+          <div className="md:hidden space-y-3">
+            {filtered.map(bin => (
+              <div key={bin.id} className={`mobile-card ${bin.fill_status === 'overflow' ? 'border-red-200 bg-red-50/30' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{bin.bin_code}</p>
+                    {bin.zone_name && <p className="text-xs text-gray-400">{bin.zone_name}</p>}
+                  </div>
+                  <FillBadge status={bin.fill_status} pct={bin.fill_pct} />
+                </div>
+                <div className="mb-2"><FillBar pct={bin.fill_pct} status={bin.fill_status} /></div>
+                <div className="space-y-1">
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Location</span>
+                    <span className="mobile-card-value">{bin.location_name}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Status</span>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
                       bin.status === 'active' ? 'bg-green-100 text-green-700' :
                       bin.status === 'offline' ? 'bg-gray-100 text-gray-600' :
                       'bg-red-100 text-red-700'
-                    }`}>
-                      {bin.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-xs text-gray-500">{fmtRelative(bin.last_reading)}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEdit(bin)}
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        title="Edit"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(bin)}
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-danger"
-                        title="Deactivate"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    }`}>{bin.status}</span>
+                  </div>
+                  <div className="mobile-card-row">
+                    <span className="mobile-card-label">Last Reading</span>
+                    <span className="mobile-card-value text-gray-500">{fmtRelative(bin.last_reading)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <button onClick={() => openEdit(bin)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors">Edit</button>
+                  <button onClick={() => setConfirmDelete(bin)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-danger hover:bg-red-50 transition-colors">Deactivate</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Add / Edit Modal */}

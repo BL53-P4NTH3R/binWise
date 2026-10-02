@@ -1,13 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
-import { driverApi } from '../../api'
-import type { RouteRead } from '../../types'
+import { driverApi, binsApi } from '../../api'
+import type { RouteRead, BinLive } from '../../types'
 import { FillBar, PageLoader, Empty } from '../../components/ui'
 import { fmtRelative } from '../../utils'
 
+// ─── Shared bottom tabs with logout ──────────────────────────────────────────
+
 function DriverBottomTabs({ active }: { active: 'home' | 'route' | 'history' }) {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    localStorage.removeItem('bw_token')
+    localStorage.removeItem('bw_user')
+    navigate('/login')
+  }
+
   return (
     <div className="driver-bottom-tab flex items-center justify-around py-2 px-4">
       {[
@@ -28,6 +38,17 @@ function DriverBottomTabs({ active }: { active: 'home' | 'route' | 'history' }) 
           <span className="text-[10px] font-semibold">{tab.label}</span>
         </Link>
       ))}
+      <button
+        onClick={handleLogout}
+        className="flex flex-col items-center gap-1 px-4 py-1 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+        title="Sign out"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span className="text-[10px] font-semibold">Logout</span>
+      </button>
     </div>
   )
 }
@@ -36,19 +57,27 @@ export { DriverBottomTabs }
 
 export default function DriverHomePage() {
   const [route, setRoute] = useState<RouteRead | null>(null)
+  const [bins, setBins] = useState<BinLive[]>([])
   const [loading, setLoading] = useState(true)
   const [noRoute, setNoRoute] = useState(false)
 
   const userRaw = localStorage.getItem('bw_user')
-  const user = userRaw ? JSON.parse(userRaw) as { full_name?: string } : null
-  const firstName = user?.full_name?.split(' ')[0] ?? 'Driver'
+  const user = userRaw ? JSON.parse(userRaw) as { full_name?: string; email?: string } : null
+  const rawName = user?.full_name?.split(' ')[0]
+    || user?.email?.split('@')[0]?.split(/[._]/)[0]
+    || 'Driver'
+  const firstName = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase()
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  const fetchRoute = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    // Fetch route and bins independently so one failing doesn't break the other
+    let routeData: RouteRead | null = null
+
     try {
       const { data } = await driverApi.getRoute()
+      routeData = data
       setRoute(data)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
@@ -57,23 +86,36 @@ export default function DriverHomePage() {
       } else {
         toast.error('Failed to load route')
       }
-    } finally {
-      setLoading(false)
     }
+
+    // Fetch bins separately — don't block route display if this fails
+    try {
+      const { data } = await binsApi.getLive()
+      setBins(data)
+    } catch {
+      // Bins unavailable for driver — not critical
+      console.warn('Could not fetch bins for driver')
+    }
+
+    setLoading(false)
   }, [])
 
-  useEffect(() => { fetchRoute() }, [fetchRoute])
+  useEffect(() => { fetchData() }, [fetchData])
 
-  const collected = route?.waypoints.filter(w => w.status === 'collected').length ?? 0
-  const total = route?.waypoints.length ?? 0
+  const wps = route?.waypoints ?? []
+  const collected = wps.filter(w => w.status === 'collected').length
+  const total = wps.length
   const remaining = total - collected
-  const nextStop = route?.waypoints
+  const nextStop = wps
     .filter(w => w.status === 'pending')
     .sort((a, b) => a.stop_order - b.stop_order)[0]
-  const recentCollected = route?.waypoints
+  const recentCollected = wps
     .filter(w => w.status === 'collected')
     .sort((a, b) => (b.collected_at ?? '').localeCompare(a.collected_at ?? ''))
-    .slice(0, 3) ?? []
+    .slice(0, 3)
+
+  // Look up bin info for the next stop
+  const nextBin = nextStop ? bins.find(b => b.id === nextStop.bin_id) : null
 
   if (loading) return (
     <div className="driver-layout flex items-center justify-center min-h-screen">
@@ -159,7 +201,12 @@ export default function DriverHomePage() {
                     {nextStop.stop_order}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">Stop {nextStop.stop_order}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {nextBin?.bin_code ?? `Stop ${nextStop.stop_order}`}
+                    </p>
+                    {nextBin?.location_name && (
+                      <p className="text-xs text-gray-500">{nextBin.location_name}</p>
+                    )}
                     {nextStop.fill_pct_at_generation != null && (
                       <div className="mt-1">
                         <FillBar pct={nextStop.fill_pct_at_generation} showLabel height="h-1.5" />
