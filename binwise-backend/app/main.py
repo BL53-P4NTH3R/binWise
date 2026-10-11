@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel
 from app.models import *
 
@@ -39,6 +40,12 @@ fastapi_app = FastAPI(
 )
 
 app = fastapi_app
+
+
+@fastapi_app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+	return RedirectResponse(url="/docs", status_code=307)
+
 
 fastapi_app.add_middleware(
 	CORSMiddleware,
