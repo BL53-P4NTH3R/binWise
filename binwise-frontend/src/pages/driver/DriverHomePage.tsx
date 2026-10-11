@@ -73,11 +73,8 @@ export default function DriverHomePage() {
 
   const fetchData = useCallback(async () => {
     // Fetch route and bins independently so one failing doesn't break the other
-    let routeData: RouteRead | null = null
-
     try {
       const { data } = await driverApi.getRoute()
-      routeData = data
       setRoute(data)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
