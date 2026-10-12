@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { binsApi, zonesApi } from '../../api'
-import type { BinRead, Zone, BinCreate, BinUpdate } from '../../types'
+import { binsApi, zonesApi, bulkApi } from '../../api'
+import type { BinRead, Zone, BinCreate, BinUpdate, BulkImportResult } from '../../types'
 import {
   Btn, Input, Select, Modal, PageLoader, Empty, FillBadge, FillBar, ConfirmDialog,
 } from '../../components/ui'
+import BulkImportModal, { type FieldDef } from '../../components/ui/BulkImportModal'
 import { fmtRelative } from '../../utils'
 
 export default function BinManagementPage() {
@@ -19,6 +20,7 @@ export default function BinManagementPage() {
   const [editBin, setEditBin] = useState<BinRead | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<BinRead | null>(null)
+  const [bulkOpen, setBulkOpen] = useState(false)
 
   // Form fields
   const [form, setForm] = useState<BinCreate>({
@@ -116,12 +118,20 @@ export default function BinManagementPage() {
           <h1 className="text-2xl font-bold text-gray-900">Bin Management</h1>
           <p className="text-sm text-gray-500">{bins.length} bins registered</p>
         </div>
-        <Btn onClick={openCreate}>
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add bin
-        </Btn>
+        <div className="flex items-center gap-2">
+          <Btn variant="secondary" onClick={() => setBulkOpen(true)}>
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import
+          </Btn>
+          <Btn onClick={openCreate}>
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add bin
+          </Btn>
+        </div>
       </div>
 
       {/* Filters */}
@@ -358,6 +368,25 @@ export default function BinManagementPage() {
         confirmLabel="Deactivate"
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(null)}
+      />
+
+      {/* Bulk Import */}
+      <BulkImportModal
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        title="Bulk Import Bins"
+        entityName="bin"
+        fields={[
+          { key: 'bin_code', label: 'Bin Code', required: true, placeholder: 'BIN-001' },
+          { key: 'zone_id', label: 'Zone', required: true, type: 'select' as const, options: zones.map(z => ({ value: z.id, label: z.name })) },
+          { key: 'location_name', label: 'Location', required: true, placeholder: 'Faculty entrance' },
+          { key: 'latitude', label: 'Latitude', required: true, type: 'number' as const, placeholder: '11.1558' },
+          { key: 'longitude', label: 'Longitude', required: true, type: 'number' as const, placeholder: '7.6228' },
+          { key: 'capacity_l', label: 'Capacity (L)', type: 'number' as const, placeholder: '240', defaultValue: '240' },
+          { key: 'height_cm', label: 'Height (cm)', type: 'number' as const, placeholder: '100', defaultValue: '100' },
+        ] satisfies FieldDef[]}
+        onSubmit={async (rows) => { const r = await bulkApi.bins(rows); return r.data }}
+        onImportComplete={fetchData}
       />
     </div>
   )

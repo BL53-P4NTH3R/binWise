@@ -13,6 +13,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import LiveMapPage from './pages/admin/LiveMapPage'
 import BinManagementPage from './pages/admin/BinManagementPage'
+import ZoneManagementPage from './pages/admin/ZoneManagementPage'
 import SensorNodesPage from './pages/admin/SensorNodesPage'
 import RouteOptimisationPage from './pages/admin/RouteOptimisationPage'
 import AnalyticsPage from './pages/admin/AnalyticsPage'
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/map" element={<LiveMapPage />} />
           <Route path="/bins" element={<BinManagementPage />} />
+          <Route path="/zones" element={<ZoneManagementPage />} />
           <Route path="/sensor-nodes" element={<SensorNodesPage />} />
           <Route path="/routes" element={<RouteOptimisationPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />

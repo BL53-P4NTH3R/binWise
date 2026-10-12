@@ -8,6 +8,7 @@ import type {
   BinRead,
   BinSummary,
   BinUpdate,
+  BulkImportResult,
   FillTrend,
   RouteRead,
   SensorNode,
@@ -18,6 +19,8 @@ import type {
   User,
   UserCreate,
   Zone,
+  ZoneCreate,
+  ZoneUpdate,
 } from '../types'
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -76,6 +79,15 @@ export const sensorNodesApi = {
 export const zonesApi = {
   getAll: () =>
     client.get<Zone[]>('/zones'),
+
+  create: (data: ZoneCreate) =>
+    client.post<Zone>('/zones', data),
+
+  update: (id: string, data: ZoneUpdate) =>
+    client.patch<Zone>(`/zones/${id}`, data),
+
+  remove: (id: string) =>
+    client.delete(`/zones/${id}`),
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -152,4 +164,20 @@ export const driverApi = {
 
   getHistory: () =>
     client.get<RouteRead[]>('/driver/history'),
+}
+
+// ─── Bulk Import ─────────────────────────────────────────────────────────────
+
+export const bulkApi = {
+  zones: (rows: Record<string, unknown>[]) =>
+    client.post<BulkImportResult>('/zones/bulk', rows),
+
+  bins: (rows: Record<string, unknown>[]) =>
+    client.post<BulkImportResult>('/bins/bulk', rows),
+
+  sensorNodes: (rows: Record<string, unknown>[]) =>
+    client.post<BulkImportResult>('/sensor-nodes/bulk', rows),
+
+  users: (rows: Record<string, unknown>[]) =>
+    client.post<BulkImportResult>('/users/bulk', rows),
 }

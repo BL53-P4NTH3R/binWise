@@ -64,6 +64,17 @@ export interface Zone {
   id: string
   name: string
   description?: string
+  created_at: string
+}
+
+export interface ZoneCreate {
+  name: string
+  description?: string
+}
+
+export interface ZoneUpdate {
+  name?: string
+  description?: string
 }
 
 // ─── User ────────────────────────────────────────────────────────────────────
@@ -200,4 +211,13 @@ export interface TripComparison {
   baseline_distance_km: number
   bin_count: number
   completed_at?: string
+}
+
+// ─── Bulk Import ─────────────────────────────────────────────────────────────
+export interface BulkImportResult {
+  total_rows: number
+  created: number
+  failed: number
+  created_records: { row: number; id: string }[]
+  errors: { row: number; message: string }[]
 }
