@@ -64,8 +64,29 @@ ESP32 sensor node -> HTTP payload -> FastAPI backend -> bin state updates + aler
 - Route optimisation using OR-Tools / nearest-neighbour logic
 - Driver-facing route and history screens
 - Role-based access and JWT-based authentication
+- Admin bulk import for users, bins, sensor nodes, and zones
 - PostgreSQL-backed persistence and SQLModel modelling
 - Firmware support for ESP32-based sensor nodes
+
+### Bulk imports
+
+Administrators can import users, bins, sensor nodes, and zones using JSON arrays
+or `.csv` / `.xlsx` files. All imports are limited to 500 rows; uploaded files
+must be no larger than 5 MB. Valid rows are saved even when other rows fail.
+The response includes created record IDs and row-numbered validation errors.
+
+| Resource | JSON endpoint | File endpoint | Required CSV/XLSX columns |
+| --- | --- | --- | --- |
+| Users | `POST /api/users/bulk` | `POST /api/users/bulk/upload` | `email`, `full_name`, `password`; optional `role` (`admin` or `driver`) |
+| Bins | `POST /api/bins/bulk` | `POST /api/bins/bulk/upload` | `bin_code`, `location_name`, `latitude`, `longitude`, `zone_id`; optional `capacity_l`, `height_cm` |
+| Sensor nodes | `POST /api/sensor-nodes/bulk` | `POST /api/sensor-nodes/bulk/upload` | `node_id`; optional `firmware_v`, `gsm_number`, `bin_id` |
+| Zones | `POST /api/zones/bulk` | `POST /api/zones/bulk/upload` | `name`; optional `description` |
+
+File uploads use multipart form data with the file field named `file`. Bin
+`zone_id` and sensor-node `bin_id` values must reference existing records.
+User passwords must be supplied as plaintext in the import input; they are
+hashed before being stored. Handle user import files as credentials and remove
+them securely after use.
 
 ---
 
