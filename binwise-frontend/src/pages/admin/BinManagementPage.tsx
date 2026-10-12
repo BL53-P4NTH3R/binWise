@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { binsApi, zonesApi, bulkApi } from '../../api'
-import type { BinRead, Zone, BinCreate, BinUpdate, BulkImportResult } from '../../types'
+import type { BinRead, Zone, BinCreate, BinUpdate } from '../../types'
 import {
   Btn, Input, Select, Modal, PageLoader, Empty, FillBadge, FillBar, ConfirmDialog,
 } from '../../components/ui'

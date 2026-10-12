@@ -11,7 +11,7 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-import { Modal, Btn, Input, Select } from '.'
+import { Modal, Btn } from '.'
 import type { BulkImportResult } from '../../types'
 
 // ─── Public API ──────────────────────────────────────────────────────────────
