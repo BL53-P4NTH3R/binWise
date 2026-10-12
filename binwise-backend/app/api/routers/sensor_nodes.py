@@ -1,9 +1,17 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlmodel import Session, select
 
 from app.core.database import get_db
+from app.core.security import require_admin
+from app.services.bulk_import import (
+    BulkRowError,
+    json_import_rows,
+    process_import_rows,
+    uploaded_import_rows,
+)
+from app.models.user import User
 from app.models.bin import Bin
 from app.models.sensor_node import (
     SensorNode,
@@ -14,6 +22,19 @@ from app.models.sensor_node import (
 
 
 router = APIRouter(tags=["sensor_nodes"])
+
+
+def _create_bulk_sensor_node(data: dict[str, object], db: Session) -> SensorNode:
+    payload = SensorNodeCreate.model_validate(data)
+    if db.exec(select(SensorNode).where(SensorNode.node_id == payload.node_id)).first() is not None:
+        raise BulkRowError(f"Sensor node '{payload.node_id}' already exists")
+    if payload.bin_id is not None:
+        if db.get(Bin, payload.bin_id) is None:
+            raise BulkRowError("bin_id does not reference an existing bin")
+        existing = db.exec(select(SensorNode).where(SensorNode.bin_id == payload.bin_id)).first()
+        if existing is not None:
+            raise BulkRowError(f"Bin already has sensor node '{existing.node_id}' assigned")
+    return SensorNode.model_validate(payload)
 
 
 def _get_node_or_404(node_id: str, db: Session) -> SensorNode:
@@ -32,6 +53,28 @@ def _get_node_or_404(node_id: str, db: Session) -> SensorNode:
 def list_sensor_nodes(db: Session = Depends(get_db)) -> list[SensorNode]:
     """List all registered sensor nodes."""
     return list(db.exec(select(SensorNode)).all())
+
+
+@router.post("/bulk")
+def bulk_create_sensor_nodes(
+    payload: list[object],
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    """Create valid sensor nodes from a JSON array; report invalid rows individually."""
+    rows = json_import_rows(payload)
+    return process_import_rows(rows, db, lambda data: _create_bulk_sensor_node(data, db))
+
+
+@router.post("/bulk/upload")
+def bulk_upload_sensor_nodes(
+    file: UploadFile = File(...),
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    """Create valid sensor nodes from a CSV or XLSX file, one node per row."""
+    rows = uploaded_import_rows(file)
+    return process_import_rows(rows, db, lambda data: _create_bulk_sensor_node(data, db))
 
 
 @router.post("", response_model=SensorNodeRead, status_code=status.HTTP_201_CREATED)

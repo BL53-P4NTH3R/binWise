@@ -2,15 +2,28 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlmodel import Session, select
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
+from app.services.bulk_import import (
+    BulkRowError,
+    json_import_rows,
+    process_import_rows,
+    uploaded_import_rows,
+)
 from app.models.user import User
 from app.models.zone import Zone, ZoneCreate, ZoneRead, ZoneUpdate
 
 router = APIRouter(tags=["zones"])
+
+
+def _create_bulk_zone(data: dict[str, object], db: Session) -> Zone:
+    payload = ZoneCreate.model_validate(data)
+    if db.exec(select(Zone).where(Zone.name == payload.name)).first() is not None:
+        raise BulkRowError("Zone with this name already exists")
+    return Zone(**payload.model_dump())
 
 
 @router.get("", response_model=list[ZoneRead])
@@ -20,6 +33,28 @@ def list_zones(
 ) -> list[Zone]:
     """Return a list of all zones."""
     return list(db.exec(select(Zone)).all())
+
+
+@router.post("/bulk")
+def bulk_create_zones(
+    payload: list[object],
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict[str, object]:
+    """Create valid zones from a JSON array; report invalid rows individually."""
+    rows = json_import_rows(payload)
+    return process_import_rows(rows, db, lambda data: _create_bulk_zone(data, db))
+
+
+@router.post("/bulk/upload")
+def bulk_upload_zones(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict[str, object]:
+    """Create valid zones from a CSV or XLSX file with one zone per row."""
+    rows = uploaded_import_rows(file)
+    return process_import_rows(rows, db, lambda data: _create_bulk_zone(data, db))
 
 
 @router.get("/{zone_id}", response_model=ZoneRead)

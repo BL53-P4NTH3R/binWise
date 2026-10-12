@@ -3,11 +3,17 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlmodel import Session, select
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
+from app.services.bulk_import import (
+    BulkRowError,
+    json_import_rows,
+    process_import_rows,
+    uploaded_import_rows,
+)
 from app.models.bin import (
     Bin,
     BinCreate,
@@ -21,6 +27,7 @@ from app.models.bin import (
 )
 from app.models.route_waypoint import RouteWaypoint, WaypointStatus
 from app.models.user import User
+from app.models.zone import Zone
 
 
 router = APIRouter(tags=["bins"])
@@ -64,6 +71,15 @@ def _bin_detail_payload(bin_record: Bin) -> dict[str, object]:
     }
 
 
+def _create_bulk_bin(data: dict[str, object], db: Session) -> Bin:
+    payload = BinCreate.model_validate(data)
+    if db.exec(select(Bin).where(Bin.bin_code == payload.bin_code)).first() is not None:
+        raise BulkRowError("bin_code already exists")
+    if db.get(Zone, payload.zone_id) is None:
+        raise BulkRowError("zone_id does not reference an existing zone")
+    return Bin(**payload.model_dump())
+
+
 @router.get("", response_model=list[BinRead])
 def list_bins(
     zone_id: UUID | None = Query(default=None),
@@ -93,6 +109,28 @@ def live_bins(
         _bin_live_payload(bin_record)
         for bin_record in db.exec(select(Bin).where(Bin.status == BinStatus.active)).all()
     ]
+
+
+@router.post("/bulk")
+def bulk_create_bins(
+    payload: list[object],
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    """Create valid bins from a JSON array; report invalid rows individually."""
+    rows = json_import_rows(payload)
+    return process_import_rows(rows, db, lambda data: _create_bulk_bin(data, db))
+
+
+@router.post("/bulk/upload")
+def bulk_upload_bins(
+    file: UploadFile = File(...),
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    """Create valid bins from a CSV or XLSX file with one bin per row."""
+    rows = uploaded_import_rows(file)
+    return process_import_rows(rows, db, lambda data: _create_bulk_bin(data, db))
 
 
 @router.get("/summary")
