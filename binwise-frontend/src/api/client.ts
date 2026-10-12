@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const API_ROOT = (import.meta as ImportMeta & { env: { VITE_API_URL?: string } }).env.VITE_API_URL || 'https://binwise-uwyn.onrender.com'
+
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_ROOT}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
