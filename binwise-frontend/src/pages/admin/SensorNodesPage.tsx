@@ -95,7 +95,7 @@ export default function SensorNodesPage() {
           gsm_number: form.gsm_number || null,
           is_active: form.is_active,
         }
-        await sensorNodesApi.update(editNode.id, update)
+        await sensorNodesApi.update(editNode.node_id, update)
         toast.success('Sensor node updated successfully')
       } else {
         await sensorNodesApi.create({
@@ -109,17 +109,24 @@ export default function SensorNodesPage() {
       setModalOpen(false)
       fetchData()
     } catch (err: unknown) {
-      // Surface specific API error messages (409 conflict, 404 not found)
       if (axios.isAxiosError(err)) {
         const status = err.response?.status
         const detail = err.response?.data?.detail
-        if ((status === 409 || status === 404) && typeof detail === 'string') {
-          setFormError(detail)
-        } else if (typeof detail === 'string') {
-          setFormError(detail)
-        } else {
-          toast.error(editNode ? 'Failed to update sensor node' : 'Failed to create sensor node')
+        let message = "We couldn't save this sensor node. Please check the details and try again."
+
+        if (status === 404 && detail === 'Bin not found') {
+          message = 'The selected bin is no longer available. Refresh the page and choose a bin again.'
+        } else if (status === 404) {
+          message = 'This sensor node could not be found. Refresh the page and try again.'
+        } else if (status === 409 && typeof detail === 'string' && detail.includes('already exists')) {
+          message = 'A sensor node with this Node ID already exists. Please choose a different ID.'
+        } else if (status === 409 && typeof detail === 'string' && detail.startsWith('Bin already has sensor node')) {
+          message = 'This bin is already linked to another sensor node. Choose a different bin or set it to Unassigned.'
+        } else if (status === 422) {
+          message = 'Some of the information is invalid. Please check the fields and try again.'
         }
+
+        setFormError(message)
       } else {
         toast.error(editNode ? 'Failed to update sensor node' : 'Failed to create sensor node')
       }
@@ -131,7 +138,7 @@ export default function SensorNodesPage() {
   const handleDelete = async () => {
     if (!confirmDelete) return
     try {
-      await sensorNodesApi.remove(confirmDelete.id)
+      await sensorNodesApi.remove(confirmDelete.node_id)
       toast.success('Sensor node deleted')
       setConfirmDelete(null)
       fetchData()

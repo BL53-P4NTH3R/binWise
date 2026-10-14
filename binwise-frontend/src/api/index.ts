@@ -67,11 +67,11 @@ export const sensorNodesApi = {
   create: (data: SensorNodeCreate) =>
     client.post<SensorNode>('/sensor-nodes', data),
 
-  update: (id: string, data: SensorNodeUpdate) =>
-    client.patch<SensorNode>(`/sensor-nodes/${id}`, data),
+  update: (nodeId: string, data: SensorNodeUpdate) =>
+    client.patch<SensorNode>(`/sensor-nodes/${nodeId}`, data),
 
-  remove: (id: string) =>
-    client.delete(`/sensor-nodes/${id}`),
+  remove: (nodeId: string) =>
+    client.delete(`/sensor-nodes/${nodeId}`),
 }
 
 // ─── Zones ───────────────────────────────────────────────────────────────────
