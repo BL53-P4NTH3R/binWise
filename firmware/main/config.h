@@ -107,8 +107,8 @@
 // 300 seconds = 5 minutes (production)
 // Change to 30 for faster testing during development
 
-// #define SLEEP_SECONDS    300
-#define SLEEP_SECONDS    30
+#define SLEEP_SECONDS    300
+// #define SLEEP_SECONDS    30
 
 // Number of HC-SR04 readings to average per cycle (reduces noise)
 #define NUM_READINGS     5
